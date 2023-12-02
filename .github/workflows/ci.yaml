@@ -1,0 +1,84 @@
+name: Continuous Integration
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - "feature/**/**"
+      - "fix/**/**"
+      - "release/v*.*.*"
+
+jobs:
+  build:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+        python-version: ["3.10", "3.11", "3.12.0"]
+    steps:
+    - uses: actions/checkout@v4.1.0
+    - name: Set up Python ${{ matrix.python-version }}
+      uses: actions/setup-python@v4.7.0
+      with:
+        python-version: ${{ matrix.python-version }}
+        cache: "pip"
+    - name: Install package and dependencies
+      run: |
+        python3 -m pip install --upgrade pip setuptools wheel
+        pip3 install -e .
+  code-quality:
+    needs: build
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+        python-version: ["3.10", "3.11", "3.12.0"]
+    steps:
+    - uses: actions/checkout@v4.1.0
+    - name: Set up Python ${{ matrix.python-version }}
+      uses: actions/setup-python@v4.7.0
+      with:
+        python-version: ${{ matrix.python-version }}
+        cache: "pip"
+    - name: Install linting dependencies
+      run:  |
+        python3 -m pip install --upgrade pip setuptools wheel
+        pip3 install -e .[codequality]
+    - name: Lint with Black
+      run: black --config=pyproject.toml .
+    - name: Lint with Isort
+      run: isort --settings-path=pyproject.toml .
+    - name: Lint with MyPy
+      run: mypy --config-file=pyproject.toml --pretty .
+  test:
+    needs: code-quality
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+        python-version: ["3.10", "3.11", "3.12.0"]
+    steps:
+    - uses: actions/checkout@v4.1.0
+    - name: Set up Python ${{ matrix.python-version }}
+      uses: actions/setup-python@v4.7.0
+      with:
+        python-version: ${{ matrix.python-version }}
+        cache: "pip"
+    - name: Install package and dependencies
+      run: |
+        python3 -m pip install --upgrade pip setuptools wheel
+        pip3 install -e .[security,testcov]
+    - name: Test application's vulnerability with bandit
+      run: bandit -c pyproject.toml -r .
+    - name: Test with Pytest-Cov
+      run: |
+        pytest --cov --cov-report xml .
+    - name: Upload coverage to Codecov
+      uses: codecov/codecov-action@v3.1.4
+      with:
+        token: ${{ secrets.CODECOV_TOKEN }}
+        fail_ci_if_error: true
+        flags: anomalytics
+        name: codecov-umbrella
+        verbose: true
