@@ -1,7 +1,7 @@
 from unittest import TestCase
 
-from anomalytics.time_windows.pot_windows import compute_pot_windows
-from anomalytics.time_windows.time_window import set_time_window
+from anomalytics import set_time_window
+from anomalytics.time_windows import compute_pot_windows
 
 
 class TestTimeWindow(TestCase):
