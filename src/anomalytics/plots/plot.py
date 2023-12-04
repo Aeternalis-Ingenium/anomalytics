@@ -25,7 +25,7 @@ def plot_line(
     plt.plot(dataset.index, dataset.values, color=plot_color, alpha=alpha)
 
     if is_threshold:
-        plt.axhline(threshold, c=th_color, ls=th_type, lw=th_line_width)
+        plt.axhline(threshold, c=th_color, ls=th_type, lw=th_line_width)  # type ignore
     plt.title(title)
     plt.xlabel(xlabel)
     plt.ylabel(ylabel)
