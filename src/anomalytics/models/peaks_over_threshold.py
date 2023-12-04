@@ -133,10 +133,11 @@ class POTDetector(Detector):
         self.__anomaly_threshold = get_anomaly_threshold(ts=self.__anomaly_score, t1=self.__time_window[1], q=q)
         self.__anomaly = get_anomaly(ts=self.__anomaly_score, t1=self.__time_window[1], q=q)
 
-    def evaluate(self, method: typing.Literal["ks", "qq"] = "ks") -> None:
+    def evaluate(self, method: typing.Literal["ks", "qq"] = "ks"):
         params = self.__get_nonzero_params
         if method == "ks":
             self.__eval = ks_1sample(ts=self.__exceedance, stats_method="POT", fit_params=params)
+            return pd.DataFrame(data=self.__eval)
 
     @property
     def __get_nonzero_params(self) -> typing.List[typing.Dict[str, typing.Union[datetime.datetime, float]]]:

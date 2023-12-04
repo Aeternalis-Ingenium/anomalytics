@@ -18,8 +18,6 @@ class TestEvaluationMethod(unittest.TestCase):
         self.assertIsInstance(result, dict)
 
         self.assertIn("total_nonzero_exceedances", result)
-        self.assertIn("start_datetime", result)
-        self.assertIn("end_datetime", result)
         self.assertIn("stats_distance", result)
         self.assertIn("p_value", result)
 

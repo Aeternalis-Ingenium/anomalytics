@@ -12,6 +12,61 @@ class TestDetector(TestCase):
         self.sample_1_ts = pd.Series(
             data=[1, 2, 3, 4, 5, 6, 7, 8, 9, 10], index=pd.date_range(start="2023-01-01", periods=10)
         )
+        self.sample_2_ts = pd.Series(
+            index=pd.date_range(start="2023-01-01", periods=50),
+            data=[
+                263,
+                275,
+                56,
+                308,
+                488,
+                211,
+                70,
+                42,
+                67,
+                472,
+                304,
+                297,
+                480,
+                227,
+                453,
+                342,
+                115,
+                115,
+                67,
+                295,
+                9,
+                228,
+                89,
+                225,
+                360,
+                367,
+                418,
+                124,
+                229,
+                12,
+                111,
+                341,
+                209,
+                374,
+                254,
+                322,
+                99,
+                166,
+                435,
+                481,
+                106,
+                438,
+                180,
+                33,
+                30,
+                330,
+                139,
+                17,
+                268,
+                204000,
+            ],
+        )
         self.ae_detector = atics.get_detector(method="AE", dataset=self.sample_1_ts)
         self.bm_detector = atics.get_detector(method="BM", dataset=self.sample_1_ts)
         self.dbscan_detector = atics.get_detector(method="DBSCAN", dataset=self.sample_1_ts)
@@ -93,64 +148,9 @@ class TestDetector(TestCase):
         self.assertEqual(self.pot_detector._POTDetector__params[0], expected_params[0])
 
     def test_compute_anomaly_threshold_method(self):
-        sample_ts = pd.Series(
-            index=pd.date_range(start="2023-01-01", periods=50),
-            data=[
-                263,
-                275,
-                56,
-                308,
-                488,
-                211,
-                70,
-                42,
-                67,
-                472,
-                304,
-                297,
-                480,
-                227,
-                453,
-                342,
-                115,
-                115,
-                67,
-                295,
-                9,
-                228,
-                89,
-                225,
-                360,
-                367,
-                418,
-                124,
-                229,
-                12,
-                111,
-                341,
-                209,
-                374,
-                254,
-                322,
-                99,
-                166,
-                435,
-                481,
-                106,
-                438,
-                180,
-                33,
-                30,
-                330,
-                139,
-                17,
-                268,
-                204000,
-            ],
-        )
         expected_anomalies = [True]
         expected_anomaly_threshold = 1.2394417670604552
-        pot_detector = atics.get_detector(method="POT", dataset=sample_ts, anomaly_type="high")
+        pot_detector = atics.get_detector(method="POT", dataset=self.sample_2_ts, anomaly_type="high")
 
         pot_detector.get_extremes(q=0.90)
         pot_detector.fit()
@@ -158,6 +158,27 @@ class TestDetector(TestCase):
 
         self.assertEqual(pot_detector._POTDetector__anomaly_threshold, expected_anomaly_threshold)
         self.assertEqual(pot_detector._POTDetector__anomaly.iloc[0], expected_anomalies)
+
+    def test_evaluation_with_ks_1sample_for_pot_detector(self):
+        pot_detector = atics.get_detector(method="POT", dataset=self.sample_2_ts, anomaly_type="high")
+
+        pot_detector.get_extremes(q=0.90)
+        pot_detector.fit()
+        pot_detector.detect(q=0.90)
+        kstest_result = pot_detector.evaluate(method="ks")
+
+        expected_kstest_result = pd.DataFrame(
+            data={
+                "total_nonzero_exceedances": [50],
+                "stats_distance": [0.9798328261695748],
+                "p_value": [3.414145934563587e-85],
+                "c": [-1.3371948412738648],
+                "loc": [0],
+                "scale": [272179.457686573],
+            }
+        )
+
+        pd.testing.assert_frame_equal(kstest_result, expected_kstest_result)
 
     def tearDown(self) -> None:
         return super().tearDown()

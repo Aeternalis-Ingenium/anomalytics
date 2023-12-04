@@ -90,14 +90,12 @@ def ks_1sample(
         )
 
         return dict(
-            total_nonzero_exceedances=len(ts),
-            start_datetime=ts.index[0],
-            end_datetime=fit_params[-1]["datetime"],
-            stats_distance=ks_result.statistic,
-            p_value=ks_result.pvalue,
-            c=c,
-            loc=loc,
-            scale=scale,
+            total_nonzero_exceedances=[ts.shape[0]],
+            stats_distance=[ks_result.statistic],
+            p_value=[ks_result.pvalue],
+            c=[c],
+            loc=[loc],
+            scale=[scale],
         )
     if stats_method == "ZS":
         raise NotImplementedError()
