@@ -4,7 +4,7 @@ import numpy as np
 import pandas as pd
 
 from anomalytics import get_anomaly_score, get_exceedance_peaks_over_threshold
-from anomalytics.stats import get_threshold_peaks_over_threshold
+from anomalytics.stats import get_anomaly_threshold, get_threshold_peaks_over_threshold
 
 
 class TestPeaksOverThreshold(unittest.TestCase):
@@ -84,6 +84,22 @@ class TestPeaksOverThreshold(unittest.TestCase):
 
         with self.assertRaises(ValueError):
             get_anomaly_score(ts=ts, t0=None, gpd_params=gpd_params)  # type: ignore
+
+    def test_get_anomaly_threshold_with_valid_input(self):
+        ts = pd.Series(np.random.rand(100), index=pd.date_range("2020-01-01", periods=100))
+        t1 = 50
+        q = 0.90
+        anomaly_threshold = get_anomaly_threshold(ts=ts, t1=t1, q=q)
+
+        self.assertIsInstance(anomaly_threshold, float)
+        self.assertTrue(0 <= anomaly_threshold <= 1)
+
+    def test_get_anomaly_threshold_with_invalid_ts(self):
+        t1 = 50
+        q = 0.90
+
+        with self.assertRaises(TypeError):
+            get_anomaly_threshold(ts="not a series", t1=t1, q=q)
 
     def tearDown(self) -> None:
         return super().tearDown()
