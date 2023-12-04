@@ -6,6 +6,13 @@ import numpy as np
 import pandas as pd
 
 from anomalytics.models.abstract import Detector
+from anomalytics.stats.peaks_over_threshold import (
+    get_anomaly,
+    get_anomaly_score,
+    get_anomaly_threshold,
+    get_exceedance_peaks_over_threshold,
+    get_threshold_peaks_over_threshold,
+)
 from anomalytics.time_windows.time_window import set_time_window
 
 logger = logging.getLogger(__name__)
@@ -96,6 +103,14 @@ class POTDetector(Detector):
         self.__params = {}
 
         logger.info("successfully initialized POT detection model")
+
+    def get_extremes(self, q: float = 0.90) -> None:
+        self.__exceedance_threshold = get_threshold_peaks_over_threshold(
+            ts=self.__dataset, t0=self.__time_window[0], anomaly_type=self.__anomaly_type, q=q
+        )
+        self.__exceedance = get_exceedance_peaks_over_threshold(
+            ts=self.__dataset, t0=self.__time_window[0], anomaly_type=self.__anomaly_type, q=q
+        )
 
     def fit(self) -> None:
         raise NotImplementedError("Not yet implemented!")
