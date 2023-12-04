@@ -43,7 +43,7 @@ jobs:
     - name: Install linting dependencies
       run:  |
         python3 -m pip install --upgrade pip setuptools wheel
-        pip3 install -e .[codequality]
+        pip3 install -e .[codequality,extra]
     - name: Lint with Black
       run: black --config=pyproject.toml .
     - name: Lint with Isort
@@ -68,7 +68,7 @@ jobs:
     - name: Install package and dependencies
       run: |
         python3 -m pip install --upgrade pip setuptools wheel
-        pip3 install -e .[security,testcov]
+        pip3 install -e .[security,testcov,extra]
     - name: Test application's vulnerability with bandit
       run: bandit -c pyproject.toml -r .
     - name: Test with Pytest-Cov

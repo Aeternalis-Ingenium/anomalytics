@@ -58,7 +58,7 @@ codequality = [
 ]
 security = ["bandit>=1.7.5"]
 testcov = ["pytest-cov>=4.1.0"]
-all = ["openpyxl"]
+extra = ["openpyxl"]
 
 [tool.bandit]
 exclude_dirs = ["tests"]
