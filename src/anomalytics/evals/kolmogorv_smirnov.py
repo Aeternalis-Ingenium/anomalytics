@@ -19,7 +19,7 @@ def ks_1sample(
         "ZSCORE",
         "1CSVM",
     ],
-    fit_params: typing.Dict,
+    fit_params: typing.Union[typing.List, typing.Dict],
 ) -> typing.Dict:
     """
     Evaluate sample and the theoretical distribution using Kolmogorov Smirnov method via `scipy.stats.ks:_1samp()`.
@@ -85,8 +85,8 @@ def ks_1sample(
         return dict(
             total_nonzero_exceedances=len(ts),
             start_datetime=ts.index[0],
-            end_datetime=ts.index[-1],
-            stats_distance=ks_result.statistics,
+            end_datetime=fit_params[-1]["datetime"],
+            stats_distance=ks_result.statistic,
             p_value=ks_result.pvalue,
             c=c,
             loc=loc,
