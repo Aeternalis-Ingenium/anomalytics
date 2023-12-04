@@ -1,3 +1,4 @@
+import datetime
 import logging
 import typing
 import warnings
@@ -134,11 +135,34 @@ class POTDetector(Detector):
         raise NotImplementedError("Not yet implemented!")
 
     @property
-    def params(self) -> dict:  # type: ignore
-        raise NotImplementedError("Not yet implemented!")
+    def __get_nonzero_params(self) -> typing.List[typing.Dict[str, typing.Union[datetime.datetime, float]]]:
+        """
+        Filter and return only GPD params where there are at least 1 parameter that is greater than 0.
 
-    def set_params(self, **kwargs: str | int | float | None) -> None:
-        raise NotImplementedError("Not yet implemented!")
+        ## Returns
+        ----------
+        parameters : typing.List[typing.Dict[str, typing.Union[datetime.datetime, float]]]
+            A list of all parameters stored in __params that are greater than 0.
+        """
+        if self.__time_window[0] is None:
+            raise ValueError("Invalid value! `t1` is not set?")
+
+        if len(self.params) == 0:
+            raise ValueError("`__params` is still empty. Need to call `fit()` first!")
+
+        nonzero_params = []
+        for row in range(0, self.__time_window[1] + self.__time_window[2]):  # type: ignore
+            if (
+                self.params[row]["c"] != 0  # type: ignore
+                or self.params[row]["loc"] != 0  # type: ignore
+                or self.params[row]["scale"] != 0  # type: ignore
+            ):
+                nonzero_params.append(self.params[row])
+        return nonzero_params
+
+    @property
+    def params(self) -> dict:  # type: ignore
+        return self.__params
 
     def __str__(self) -> str:
         return "POT"
