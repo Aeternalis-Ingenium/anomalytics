@@ -22,13 +22,20 @@ def plot_line(
     alpha: float = 0.8,
 ):
     fig = plt.figure(figsize=(plot_width, plot_height))
-    plt.plot(dataset.index, dataset.values, color=plot_color, alpha=alpha)
+    plt.plot(dataset.index, dataset.values, color=plot_color, alpha=alpha, label=f"{dataset.shape[0]} Data Points")
 
     if is_threshold:
         if type(threshold) == float:
-            plt.axhline(threshold, c=th_color, ls=th_type, lw=th_line_width)
+            plt.axhline(threshold, c=th_color, ls=th_type, lw=th_line_width, label=f"{threshold} Anomaly Threshold")
         elif isinstance(threshold, pd.Series):
-            plt.plot(dataset.index, threshold.values, c=th_color, ls=th_type, lw=th_line_width)
+            plt.plot(
+                dataset.index,
+                threshold.values,
+                c=th_color,
+                ls=th_type,
+                lw=th_line_width,
+                label=f"Exceedance Threshold Mean {threshold.mean()}",
+            )
     plt.title(title)
     plt.xlabel(xlabel)
     plt.ylabel(ylabel)

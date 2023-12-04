@@ -90,14 +90,7 @@ class POTDetector(Detector):
 
         self.__anomaly_type = anomaly_type
         self.__dataset = dataset
-        self.__time_window = set_time_window(
-            total_rows=self.__dataset.shape[0],
-            method="POT",
-            analysis_type="real-time",
-            t0_pct=0.70,
-            t1_pct=0.3,
-            t2_pct=0.0,
-        )
+        self.__time_window = None  # type: ignore
         self.__exceedance_threshold = None
         self.__exceedance = None
         self.__anomaly_score = None
@@ -107,6 +100,16 @@ class POTDetector(Detector):
         self.__params = {}
 
         logger.info("successfully initialized POT detection model")
+
+    def set_time_window(self, t0_pct: float = 0.65, t1_pct: float = 0.25, t2_pct: float = 0.10) -> None:
+        self.__time_window = set_time_window(
+            total_rows=self.__dataset.shape[0],
+            method="POT",
+            analysis_type="real-time",
+            t0_pct=t0_pct,
+            t1_pct=t1_pct,
+            t2_pct=t2_pct,
+        )
 
     def get_extremes(self, q: float = 0.90) -> None:
         if isinstance(self.__dataset, pd.DataFrame):
@@ -134,13 +137,15 @@ class POTDetector(Detector):
         self.__anomaly_threshold = get_anomaly_threshold(ts=self.__anomaly_score, t1=self.__time_window[1], q=q)
         self.__anomaly = get_anomaly(ts=self.__anomaly_score, t1=self.__time_window[1], q=q)
 
-    def evaluate(self, method: typing.Literal["ks", "qq"] = "ks") -> None:
+    def evaluate(self, method: typing.Literal["ks", "qq"] = "ks", is_random_param: bool = False) -> None:
         params = self.__get_nonzero_params
         if method == "ks":
             self.__eval = pd.DataFrame(data=ks_1sample(ts=self.__exceedance, stats_method="POT", fit_params=params))
             assert isinstance(self.__eval, pd.DataFrame)
         else:
-            visualize_qq_plot(ts=self.__exceedance, stats_method="POT", fit_params=params, is_random_param=True)
+            visualize_qq_plot(
+                ts=self.__exceedance, stats_method="POT", fit_params=params, is_random_param=is_random_param
+            )
 
     @property
     def __get_nonzero_params(self) -> typing.List[typing.Dict[str, typing.Union[datetime.datetime, float]]]:
@@ -175,9 +180,9 @@ class POTDetector(Detector):
     def return_dataset(
         self,
         set_type: typing.Literal[
-            "exceedance_threshold", "exceedance", "anomaly", "anomaly_threshold", "anomaly_score"
+            "exceedance_threshold", "exceedance", "anomaly", "anomaly_threshold", "anomaly_score", "eval"
         ],
-    ) -> typing.Union[pd.DataFrame, pd.Series]:
+    ) -> typing.Union[pd.DataFrame, pd.Series, float]:
         if set_type == "exceedance_threshold":
             dataset = self.__exceedance_threshold
         elif set_type == "exceedance":
@@ -188,6 +193,8 @@ class POTDetector(Detector):
             dataset = self.__anomaly_threshold
         elif set_type == "anomaly":
             dataset = self.__anomaly
+        elif set_type == "eval":
+            dataset = self.__eval
         else:
             raise ValueError(
                 "Invalid value! Available `set_type` values: 'exceedance_threshold', 'exceedance', 'anomaly', 'anomaly_threshold', 'anomaly_score'"
