@@ -133,7 +133,7 @@ class POTDetector(Detector):
         self.__anomaly_threshold = get_anomaly_threshold(ts=self.__anomaly_score, t1=self.__time_window[1], q=q)
         self.__anomaly = get_anomaly(ts=self.__anomaly_score, t1=self.__time_window[1], q=q)
 
-    def evaluate(self, method: typing.Literal["ks", "qq"] = "ks"):
+    def evaluate(self, method: typing.Literal["ks", "qq"] = "ks") -> None:
         params = self.__get_nonzero_params
         if method == "ks":
             self.__eval = ks_1sample(ts=self.__exceedance, stats_method="POT", fit_params=params)
@@ -169,6 +169,28 @@ class POTDetector(Detector):
     @property
     def params(self) -> dict:  # type: ignore
         return self.__params
+
+    def return_dataset(
+        self,
+        set_type: typing.Literal[
+            "exceedance_threshold", "exceedance", "anomaly", "anomaly_threshold", "anomaly_score"
+        ],
+    ) -> typing.Union[pd.DataFrame, pd.Series]:
+        if set_type == "exceedance_threshold":
+            dataset = self.__exceedance_threshold
+        elif set_type == "exceedance":
+            dataset = self.__exceedance
+        elif set_type == "anomaly_score":
+            dataset = self.__anomaly_score
+        elif set_type == "anomaly_threshold":
+            dataset = self.__anomaly_threshold
+        elif set_type == "anomaly":
+            dataset = self.__anomaly
+        else:
+            raise ValueError(
+                "Invalid value! Available `set_type` values: 'exceedance_threshold', 'exceedance', 'anomaly', 'anomaly_threshold', 'anomaly_score'"
+            )
+        return dataset
 
     def __str__(self) -> str:
         return "POT"
