@@ -34,7 +34,7 @@ def calculate_theoretical_q(
     q = np.arange(1, len(sorted_nonzero_ts) + 1) / (len(sorted_nonzero_ts) + 1)
 
     if is_random_param:
-        nonzero_params = fit_params[np.random.randint(a=0, b=len(fit_params) - 1)]
+        nonzero_params = fit_params[np.random.randint(low=0, high=len(fit_params) - 1)]
     else:
         nonzero_params = fit_params[-1]
 
