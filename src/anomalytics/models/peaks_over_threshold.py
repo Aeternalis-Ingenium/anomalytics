@@ -45,7 +45,7 @@ class POTDetector(Detector):
     __anomaly_threshold: typing.Union[pd.DataFrame, pd.Series]
     __anomaly: typing.Union[pd.DataFrame, pd.Series]
     __eval: pd.DataFrame
-    __params: dict
+    __params: typing.Dict
 
     def __init__(
         self, dataset: typing.Union[pd.DataFrame, pd.Series], anomaly_type: typing.Literal["high", "low"] = "high"
@@ -137,7 +137,8 @@ class POTDetector(Detector):
     def evaluate(self, method: typing.Literal["ks", "qq"] = "ks") -> None:
         params = self.__get_nonzero_params
         if method == "ks":
-            self.__eval = ks_1sample(ts=self.__exceedance, stats_method="POT", fit_params=params)
+            self.__eval = pd.DataFrame(data=ks_1sample(ts=self.__exceedance, stats_method="POT", fit_params=params))
+            assert isinstance(self.__eval, pd.DataFrame)
         else:
             visualize_qq_plot(ts=self.__exceedance, stats_method="POT", fit_params=params, is_random_param=True)
 
