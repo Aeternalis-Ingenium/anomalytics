@@ -51,8 +51,5 @@ class DBSCANDetector(Detector):
     def params(self) -> dict:  # type: ignore
         raise NotImplementedError("Not yet implemented!")
 
-    def set_params(self, **kwargs: str | int | float | None) -> None:
-        raise NotImplementedError("Not yet implemented!")
-
     def __str__(self) -> str:
         return "DBSCAN"

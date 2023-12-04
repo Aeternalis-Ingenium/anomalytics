@@ -56,15 +56,3 @@ class Detector(metaclass=abc.ABCMeta):
             The fitting result from the model.
         """
         ...
-
-    @abc.abstractmethod
-    def set_params(self, **kwargs: typing.Union[str, int, float, None]) -> None:
-        """
-        Set the parameters for the anomaly detection model.
-
-        ## Parameters
-        -------------
-        **kwargs : typing.Union[str, int, float, None]
-            Store fitting parameters.
-        """
-        ...
