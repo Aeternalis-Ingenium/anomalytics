@@ -3,7 +3,7 @@ import unittest
 import numpy as np
 import pandas as pd
 
-from anomalytics import get_exceedance_peaks_over_threshold, fit_exceedance
+from anomalytics import fit_exceedance, get_exceedance_peaks_over_threshold
 from anomalytics.stats import get_threshold_peaks_over_threshold
 
 
@@ -64,32 +64,27 @@ class TestPeaksOverThreshold(unittest.TestCase):
     def test_fit_exceedance_with_valid_input(self):
         ts = pd.Series(np.random.rand(100) * 2, index=pd.date_range("2020-01-01", periods=100))
         t0 = 10
-        gpd_params = {}
-        exceedances = get_exceedance_peaks_over_threshold(
-            ts=ts,
-            t0=t0,
-            anomaly_type="high",
-            q=0.9
-        )
-        anomaly_scores = fit_exceedance(exceedances, t0, gpd_params)
+        gpd_params: dict = {}
+        exceedances = get_exceedance_peaks_over_threshold(ts=ts, t0=t0, anomaly_type="high", q=0.9)
+        anomaly_scores = fit_exceedance(ts=exceedances, t0=t0, gpd_params=gpd_params)
 
         self.assertIsInstance(anomaly_scores, pd.Series)
-        self.assertEqual(len(anomaly_scores), len(ts) - t0)
+        self.assertEqual(len(anomaly_scores), len(ts.values) - t0)
         self.assertTrue(all(isinstance(gpd_params[i], dict) for i in gpd_params))
 
     def test_fit_exceedance_with_invalid_ts(self):
         t0 = 10
-        gpd_params = {}
+        gpd_params: dict = {}
 
         with self.assertRaises(TypeError):
-            fit_exceedance("not a series", t0, gpd_params)
+            fit_exceedance(ts="not a series", t0=t0, gpd_params=gpd_params)
 
     def test_fit_exceedance_with_invalid_t0(self):
         ts = pd.Series(np.random.rand(100) * 2, index=pd.date_range("2020-01-01", periods=100))
-        gpd_params = {}
+        gpd_params: dict = {}
 
         with self.assertRaises(ValueError):
-            fit_exceedance(ts, None, gpd_params)
+            fit_exceedance(ts=ts, t0=None, gpd_params=gpd_params)  # type: ignore
 
     def tearDown(self) -> None:
         return super().tearDown()

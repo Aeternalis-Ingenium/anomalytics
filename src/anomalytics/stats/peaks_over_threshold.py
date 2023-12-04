@@ -117,6 +117,9 @@ def fit_exceedance(ts: pd.Series, t0: int, gpd_params: typing.Dict) -> pd.Series
     anomaly_scores : pandas.Series
         A Pandas Series with anomaly scores (inverted p-value) as its values.
     """
+    logger.debug(
+        f"calculating anomaly score using t0={t0}, scipy.stats.genpareto.fit(), and scipy.stats.genpareto.sf()"
+    )
     if not isinstance(ts, pd.Series):
         raise TypeError("Invalid value! The `ts` argument must be a Pandas Series")
     if t0 is None:
@@ -126,7 +129,7 @@ def fit_exceedance(ts: pd.Series, t0: int, gpd_params: typing.Dict) -> pd.Series
     t1_t2_exceedances = ts.iloc[t0:]
 
     for row in range(0, t1_t2_exceedances.shape[0]):
-        fit_exceedances = ts.iloc[t0 + row:]
+        fit_exceedances = ts.iloc[t0 + row :]
         future_exeedance = t1_t2_exceedances.iloc[row]
         nonzero_fit_exceedances = fit_exceedances[fit_exceedances.values > 0.0]
         if future_exeedance > 0:
@@ -163,4 +166,5 @@ def fit_exceedance(ts: pd.Series, t0: int, gpd_params: typing.Dict) -> pd.Series
                 anomaly_score=0.0,
             )
             anomaly_scores.append(0.0)
+    logger.debug(f"successfully calculating anomaly score")
     return pd.Series(index=ts.index[t0:], data=anomaly_scores, name="anomaly scores")
