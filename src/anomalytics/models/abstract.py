@@ -38,9 +38,16 @@ class Detector(metaclass=abc.ABCMeta):
         ...
 
     @abc.abstractmethod
-    def evaluate(self) -> None:
+    def evaluate(self, method: typing.Literal["ks", "qq"] = "ks") -> None:
         """
         Evaluate the performance of the anomaly detection model based on true and predicted labels.
+
+        ## Parameters
+        -------------
+        method : method: typing.Literal["ks", "qq"], default "ks"
+            A parameter that decide what statistical method to use for testing the analysis result.
+            * "ks" for Kolmogorov Smirnov
+            * "qq" for QQ Plot
         """
         ...
 

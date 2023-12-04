@@ -44,7 +44,7 @@ class AutoencoderDetector(Detector):
     def detect(self) -> None:
         raise NotImplementedError("Not yet implemented!")
 
-    def evaluate(self) -> None:
+    def evaluate(self, method: typing.Literal["ks", "qq"] = "ks") -> None:
         raise NotImplementedError("Not yet implemented!")
 
     @property
