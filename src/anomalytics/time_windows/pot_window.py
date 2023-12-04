@@ -40,7 +40,7 @@ def compute_pot_windows(
     (650, 250, 100)
 
     ## Raises
-    -------
+    ---------
     ValueError
         If the percentages do not sum up correctly or if t0_pct is less than t1_pct and t2_pct.
     """

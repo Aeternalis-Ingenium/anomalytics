@@ -185,7 +185,7 @@ def set_time_window(  # type: ignore
     (700, 200, 100)
 
     ## Raises
-    -------
+    ---------
     NotImplementedError
         If the chosen method's specific time window setting isn't implemented yet.
     ValueError

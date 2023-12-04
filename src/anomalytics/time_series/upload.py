@@ -187,7 +187,7 @@ def read_ts(
     Name: Example Dataset, dtype: float64
 
     ## Raises
-    -------
+    ---------
     ValueError
         If the `path_to_file` is None or if the `file_type` is not one of the supported formats ('csv', 'xlsx').
     """
