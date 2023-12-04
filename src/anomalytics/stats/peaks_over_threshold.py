@@ -77,6 +77,7 @@ def get_exceedance_peaks_over_threshold(
         A Pandas Series with values exceeding the POT thresholds.
     """
     logger.debug(f"extracting exceedances from dynamic threshold using anomaly_type={anomaly_type}, t0={t0}, q={q}")
+
     if anomaly_type not in ["high", "low"]:
         raise ValueError(f"Invalid value! The `anomaly_type` argument must be 'high' or 'low'")
     if not isinstance(ts, pd.Series):
@@ -90,7 +91,9 @@ def get_exceedance_peaks_over_threshold(
         pot_exceedances = np.maximum(ts - pot_thresholds, 0.0)
     else:
         pot_exceedances = np.where(ts > pot_thresholds, 0.0, np.abs(ts - pot_thresholds))
+
     logger.debug(f"successfully extracting exceedances from dynamic threshold for {anomaly_type} anomaly type")
+
     return pd.Series(index=ts.index, data=pot_exceedances, name="exceedances")
 
 
@@ -119,6 +122,7 @@ def get_anomaly_score(ts: pd.Series, t0: int, gpd_params: typing.Dict) -> pd.Ser
     logger.debug(
         f"calculating anomaly score using t0={t0}, scipy.stats.genpareto.fit(), and scipy.stats.genpareto.sf()"
     )
+
     if not isinstance(ts, pd.Series):
         raise TypeError("Invalid value! The `ts` argument must be a Pandas Series")
     if t0 is None:
@@ -167,6 +171,7 @@ def get_anomaly_score(ts: pd.Series, t0: int, gpd_params: typing.Dict) -> pd.Ser
             anomaly_scores.append(0.0)
 
     logger.debug(f"successfully calculating anomaly score")
+
     return pd.Series(index=ts.index[t0:], data=anomaly_scores, name="anomaly scores")
 
 
@@ -191,12 +196,14 @@ def get_anomaly_threshold(ts: pd.Series, t1: int, q: float = 0.90) -> float:
         A single float serves as the threshold for anomalous data.
     """
     logger.debug(f"calculating anomaly threshold using t1={t1}, q={q}, and `numpy.quantile()` function")
+
     if not isinstance(ts, pd.Series):
         raise TypeError("Invalid value! The `ts` argument must be a Pandas Series")
 
     t1_anomaly_scores = ts[(ts.values > 0) & (ts.values != float("inf"))].iloc[:t1]
 
     logger.debug(f"successfully calculating anomaly threshold using {q} quantile")
+
     return np.quantile(
         a=t1_anomaly_scores.values,
         q=q,
@@ -224,6 +231,7 @@ def get_anomaly(ts: pd.Series, t1: int, q: float = 0.90) -> pd.Series:
         A Pandas Series that reveals which value is anomalous.
     """
     logger.debug(f"detecting anomaly using t1={t1}, q={q}, and `get_anoamly_threshold()` function")
+
     if not isinstance(ts, pd.Series):
         raise TypeError("Invalid value! The `ts` argument must be a Pandas Series")
 
