@@ -92,5 +92,72 @@ class TestDetector(TestCase):
         pd.testing.assert_series_equal(self.pot_detector._POTDetector__anomaly_score, expected_anomaly_scores)
         self.assertEqual(self.pot_detector._POTDetector__params[0], expected_params[0])
 
+    def test_compute_anomaly_threshold_method(self):
+        sample_ts = pd.Series(
+            index=pd.date_range(start="2023-01-01", periods=50),
+            data=[
+                263,
+                275,
+                56,
+                308,
+                488,
+                211,
+                70,
+                42,
+                67,
+                472,
+                304,
+                297,
+                480,
+                227,
+                453,
+                342,
+                115,
+                115,
+                67,
+                295,
+                9,
+                228,
+                89,
+                225,
+                360,
+                367,
+                418,
+                124,
+                229,
+                12,
+                111,
+                341,
+                209,
+                374,
+                254,
+                322,
+                99,
+                166,
+                435,
+                481,
+                106,
+                438,
+                180,
+                33,
+                30,
+                330,
+                139,
+                17,
+                268,
+                204000,
+            ],
+        )
+        expected_anomalies = [True]
+        expected_anomaly_threshold = 1.2394417670604552
+        pot_detector = atics.get_detector(method="POT", dataset=sample_ts, anomaly_type="high")
+
+        pot_detector.get_extremes(q=0.90)
+        pot_detector.fit()
+        pot_detector.detect(q=0.90)
+
+        self.assertEqual(pot_detector._POTDetector__anomaly_threshold, expected_anomaly_threshold)
+        self.assertEqual(pot_detector._POTDetector__anomaly.iloc[0], expected_anomalies)
+
     def tearDown(self) -> None:
         return super().tearDown()

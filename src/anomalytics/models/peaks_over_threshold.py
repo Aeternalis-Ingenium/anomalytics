@@ -105,6 +105,9 @@ class POTDetector(Detector):
         logger.info("successfully initialized POT detection model")
 
     def get_extremes(self, q: float = 0.90) -> None:
+        if isinstance(self.__dataset, pd.DataFrame):
+            pass
+
         self.__exceedance_threshold = get_threshold_peaks_over_threshold(
             ts=self.__dataset, t0=self.__time_window[0], anomaly_type=self.__anomaly_type, q=q
         )
@@ -115,12 +118,17 @@ class POTDetector(Detector):
     def fit(self) -> None:
         if isinstance(self.__dataset, pd.DataFrame):
             pass
+
         self.__anomaly_score = get_anomaly_score(
             ts=self.__exceedance, t0=self.__time_window[0], gpd_params=self.__params
         )
 
-    def detect(self) -> None:
-        raise NotImplementedError("Not yet implemented!")
+    def detect(self, q: float = 0.90) -> None:
+        if isinstance(self.__dataset, pd.DataFrame):
+            pass
+
+        self.__anomaly_threshold = get_anomaly_threshold(ts=self.__anomaly_score, t1=self.__time_window[1], q=q)
+        self.__anomaly = get_anomaly(ts=self.__anomaly_score, t1=self.__time_window[1], q=q)
 
     def evaluate(self) -> None:
         raise NotImplementedError("Not yet implemented!")
