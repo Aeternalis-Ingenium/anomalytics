@@ -101,5 +101,18 @@ class TestPeaksOverThreshold(unittest.TestCase):
         with self.assertRaises(TypeError):
             get_anomaly_threshold(ts="not a series", t1=t1, q=q)
 
+    def test_confirm_correct_quantile_calculation_for_anomaly_threshold(self):
+        ts = pd.Series(
+            [0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0], index=pd.date_range("2020-01-01", periods=10)
+        )
+        t1 = 5
+        q = 0.90
+        t1_ts = ts.iloc[:t1]
+
+        expected_anomaly_threshold = np.quantile(a=t1_ts.values, q=q)
+        anomaly_threshold = get_anomaly_threshold(ts=ts, t1=t1, q=q)
+
+        self.assertEqual(anomaly_threshold, expected_anomaly_threshold)
+
     def tearDown(self) -> None:
         return super().tearDown()
