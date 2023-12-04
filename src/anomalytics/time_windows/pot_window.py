@@ -8,6 +8,43 @@ def compute_pot_windows(
     t1_pct: float = 0.25,
     t2_pct: float = 0.10,
 ) -> typing.Tuple[int, int, int]:
+    """
+    Compute the time windows for Peak Over Threshold (POT) analysis based on total number of rows and specified percentages.
+
+    ## Parameters
+    -------------
+    total_rows : int
+        The total number of rows in the time series data.
+
+    analysis_type : typing.Literal["historical", "real-time"]
+        Type of analysis to be performed, either historical or real-time.
+
+    t0_pct : float, default is 0.65
+        Percentage of total rows allocated to the T0 time window.
+
+    t1_pct : float, default is 0.25
+        Percentage of total rows allocated to the T1 time window.
+
+    t2_pct : float, default is 0.10
+        Percentage of total rows allocated to the T2 time window (not used in real-time analysis).
+
+    ## Returns
+    ----------
+    typing.Tuple[int, int, int]
+        A tuple of integers representing the number of rows in each time window (T0, T1, T2).
+
+    ## Example
+    ----------
+    >>> t0, t1, t2 = compute_pot_windows(1000, "historical")
+    >>> print(t0, t1, t2)
+    (650, 250, 100)
+
+    ## Raises
+    -------
+    ValueError
+        If the percentages do not sum up correctly or if t0_pct is less than t1_pct and t2_pct.
+    """
+
     if t0_pct - t1_pct < 0.0:
         raise ValueError("T0 time window needs to be bigger than T1 and T2, as a rule of thumb: t0 >= t1 > t2")
     if analysis_type == "real-time":
