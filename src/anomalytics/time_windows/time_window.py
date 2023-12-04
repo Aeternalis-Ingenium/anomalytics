@@ -1,7 +1,7 @@
 import logging
 import typing
 
-from anomalytics.time_windows.pot_windows import compute_pot_windows
+from anomalytics.time_windows.pot_window import compute_pot_windows
 
 logger = logging.getLogger(__name__)
 
