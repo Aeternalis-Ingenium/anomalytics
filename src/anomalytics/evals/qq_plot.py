@@ -93,6 +93,8 @@ def visualize_qq_plot(
     plot_width: int = 15,
     plot_height: int = 10,
 ):
+    logger.debug(f"performing qq plot for {stats_method} analysis with total of {len(fit_params)} fir params")
+
     if not isinstance(ts, pd.Series):
         raise TypeError("Invalid value! The `ts` argument must be a Pandas Series")
     if not isinstance(ts.index, pd.DatetimeIndex):
@@ -133,7 +135,7 @@ def visualize_qq_plot(
     elif stats_method == "1CSVM":
         raise NotImplementedError("Not implemented yet!")
 
-    logger.debug(f"fail to perform kolmogorov smirnov test for {stats_method} stats method")
+    logger.debug(f"fail to plot qq for {stats_method} analysis")
 
     plt.scatter(theoretical_q, sorted_nonzero_ts, c="black", label=scatter_label)
     plt.plot(
