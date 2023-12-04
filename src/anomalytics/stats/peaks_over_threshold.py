@@ -1,4 +1,3 @@
-import datetime
 import logging
 import typing
 
@@ -95,7 +94,7 @@ def get_exceedance_peaks_over_threshold(
     return pd.Series(index=ts.index, data=pot_exceedances, name="exceedances")
 
 
-def fit_exceedance(ts: pd.Series, t0: int, gpd_params: typing.Dict) -> pd.Series:
+def get_anomaly_score(ts: pd.Series, t0: int, gpd_params: typing.Dict) -> pd.Series:
     """
     Fit exceedances into generalized pareto distribution to calculate the anomaly score.
 
