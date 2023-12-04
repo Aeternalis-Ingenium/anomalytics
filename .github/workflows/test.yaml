@@ -1,0 +1,46 @@
+name: CI Automated Testing
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - "feature/**/**"
+      - "fix/**/**"
+      - "release/v*.*.*"
+  workflow_run:
+    workflows: ["Code Quality"]
+    types:
+      - completed
+
+jobs:
+  test:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+        python-version: ["3.10", "3.11", "3.12"]
+    steps:
+    - uses: actions/checkout@v4.1.0
+    - name: Set up Python ${{ matrix.python-version }}
+      uses: actions/setup-python@v4.7.0
+      with:
+        python-version: ${{ matrix.python-version }}
+        cache: "pip"
+    - name: Install package and dependencies
+      run: |
+        python3 -m pip install --upgrade pip setuptools wheel
+        pip3 install -e .[security,testcov,extra]
+    - name: Test application's vulnerability with bandit
+      run: bandit -c pyproject.toml -r .
+    - name: Test with Pytest-Cov
+      run: |
+        pytest --cov --cov-report xml .
+    - name: Upload coverage to Codecov
+      uses: codecov/codecov-action@v3.1.4
+      with:
+        token: ${{ secrets.CODECOV_TOKEN }}
+        fail_ci_if_error: true
+        flags: anomalytics
+        name: codecov-umbrella
+        verbose: true

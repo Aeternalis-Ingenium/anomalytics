@@ -24,6 +24,44 @@ def calculate_theoretical_q(
     fit_params: typing.Union[typing.List, typing.Dict],
     is_random_param: bool = False,
 ) -> typing.Tuple[pd.Series, np.ndarray[typing.Any, np.dtype[typing.Any]], typing.Union[typing.List, typing.Dict]]:
+    """
+    Calculate the theoretical quantiles for a given time series and statistical method from the fitting parameters.
+
+    ## Parameters
+    -------------
+    ts : pandas.Series
+        A Pandas Series that contains your data.
+
+    stats_method : typing.Literal["AE", "BM", "DBSCAN", "ISOF", "MAD", "POT", "ZSCORE", "1CSVM"]
+        Statistical method to be used for the calculation of theoretical quantiles.
+
+    fit_params : typing.Union[typing.List, typing.Dict]
+        Parameters for the statistical method used in the calculation. Can be a list or a dictionary.
+
+    is_random_param : bool, default is False
+        If True, randomly selects parameters from the provided list; otherwise, uses the last element of the list or the provided dictionary.
+
+    ## Returns
+    ----------
+    tuple : (pd.Series, np.ndarray, typing.Union[typing.List, typing.Dict])
+        A tuple containing sorted nonzero time series values, calculated theoretical quantiles, and the fit parameters used.
+
+    ## Example
+    ----------
+    >>> ts = pd.Series([...])
+    >>> fit_params = {"c": 0.5, "loc": 0, "scale": 1}
+    >>> sorted_ts, theoretical_q, params = calculate_theoretical_q(ts, "POT", fit_params)
+
+    ## Raises
+    ----------
+    TypeError
+        If the input `ts` is not a Pandas Series.
+    ValueError
+        If the `stats_method` is not one of the predefined statistical methods.
+    NotImplementedError
+        If the selected statistical method's implementation is not available.
+    """
+
     logger.debug(f"performing theoretical quantile calculation for qq plot with fit_params={fit_params}")
 
     if not isinstance(ts, pd.Series):
@@ -93,6 +131,46 @@ def visualize_qq_plot(
     plot_width: int = 15,
     plot_height: int = 10,
 ):
+    """
+    Visualize a QQ plot for a given time series based on the specified statistical method for visual evaluation.
+
+    ## Parameters
+    -------------
+    ts : pandas.Series
+        A Pandas Series that contains your data.
+
+    stats_method : typing.Literal["AE", "BM", "DBSCAN", "ISOF", "MAD", "POT", "ZSCORE", "1CSVM"]
+        The statistical method used for generating the QQ plot.
+
+    fit_params : typing.Union[typing.List, typing.Dict]
+        Parameters for the statistical method used in the plot. Can be a list or a dictionary.
+
+    is_random_param : bool, default is False
+        If True, randomly selects parameters from the provided list; otherwise, uses the last element of the list or the provided dictionary.
+
+    plot_width : int, default is 15
+        The width for figsize in `Matplotlib.plt.figure()`.
+
+    plot_height : int, default is 10
+        The height for figsize in `Matplotlib.plt.figure()`.
+
+    ## Example
+    ----------
+    >>> ts = pd.Series([...])
+    >>> fit_params = {"c": 0.5, "loc": 0, "scale": 1}
+    >>> visualize_qq_plot(ts, "POT", fit_params)
+    # This will display the QQ plot
+
+    ## Raises
+    ---------
+    TypeError
+        If the input `ts` is not a Pandas Series or if `ts.index` is not a DatetimeIndex.
+    SyntaxError
+        If there's an error converting `ts.index` to a pandas.DatetimeIndex.
+    NotImplementedError
+        If the selected statistical method's implementation for visualization is not available.
+    """
+
     logger.debug(f"performing qq plot for {stats_method} analysis with total of {len(fit_params)} fir params")
 
     if not isinstance(ts, pd.Series):

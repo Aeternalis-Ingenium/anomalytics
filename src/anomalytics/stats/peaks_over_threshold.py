@@ -15,24 +15,48 @@ def get_threshold_peaks_over_threshold(
     q: float = 0.90,
 ) -> pd.Series:
     """
-    Calculate the POT threshold value that will be used to extract the exceedances from `ts` dataset.
+    Calculate the Peaks Over Threshold (POT) threshold values for a given time series.
 
     ## Parameters
     -------------
     ts : pandas.Series
-        The dataset with 1 feature and datetime index to calculate the quantiles.
+        One feature dataset and a datetime index to calculate the quantiles.
 
     t0 : int
-        Time window to find dynamic expanding period for calculating quantile score.
+        Time window to find a dynamic expanding period for calculating the quantile score.
 
-    q : float
-        The quantile to use for thresholding, default 0.90.
+    anomaly_type : typing.Literal["high", "low"], default is "high"
+        Type of anomaly to detect - high or low.
+
+    q : float, default is 0.90
+        The quantile used for thresholding.
 
     ## Returns
     ----------
-    pot_thresholds : pandas.Series:
+    pd.Series
         A Pandas Series where each value is a threshold to extract the exceedances from the original dataset.
+
+    ## Example
+    ----------
+    >>> t0, t1, t2 = set_time_window(1000, "POT", "historical", t0_pct=0.7, t1_pct=0.2, t2_pct=0.1)
+    >>> pot_threshold_ts = get_threshold_peaks_over_threshold(ts, t0, "high", 0.95)
+    >>> pot_threshold_ts.tail()
+    Date-Time
+    2020-03-31 19:00:00    0.867
+    2020-03-31 20:00:00    0.867
+    2020-03-31 21:00:00    0.867
+    2020-03-31 22:00:00    0.867
+    2020-03-31 23:00:00    0.867
+    Name: Example Dataset, dtype: float64
+
+    ## Raises
+    ---------
+    ValueError
+        If the `anomaly_type` argument is not 'high' or 'low'.
+    TypeError
+        If the `ts` argument is not a Pandas Series.
     """
+
     logger.debug(
         f"calculating dynamic threshold for exceedance extraction using anomaly_type={anomaly_type}, t0={t0}, q={q}"
     )
@@ -58,24 +82,48 @@ def get_exceedance_peaks_over_threshold(
     q: float = 0.90,
 ) -> pd.Series:
     """
-    Extract values from the `ts` dataset that exceed the POT threshold values.
+    Extract values from the time series dataset that exceed the POT threshold values.
 
     ## Parameters
     -------------
     ts : pandas.Series
-        The dataset with 1 feature and datetime index to calculate the quantiles.
+        The dataset with one feature and a datetime index.
 
     t0 : int
-        Time window to find dynamic expanding period for calculating quantile score.
+        Time window to find a dynamic expanding period for calculating the quantile score.
 
-    q : float
-        The quantile to use for thresholding, default 0.90.
+    anomaly_type : typing.Literal["high", "low"], default is "high"
+        Type of anomaly to detect - high or low.
+
+    q : float, default is 0.90
+        The quantile used for thresholding.
 
     ## Returns
     ----------
-    exceedances : pandas.Series
+    pd.Series
         A Pandas Series with values exceeding the POT thresholds.
+
+    ## Example
+    ----------
+    >>> t0, t1, t2 = set_time_window(1000, "POT", "historical", t0_pct=0.7, t1_pct=0.2, t2_pct=0.1)
+    >>> exceedance_ts = get_exceedance_peaks_over_threshold(ts, t0, "high", 0.95)
+    >>> exceedance_ts.tail()
+    Date-Time
+    2020-03-31 19:00:00    0.867
+    2020-03-31 20:00:00    0.867
+    2020-03-31 21:00:00    0.867
+    2020-03-31 22:00:00    0.867
+    2020-03-31 23:00:00    0.867
+    Name: Example Dataset, dtype: float64
+
+    ## Raises
+    ---------
+    ValueError
+        If the `anomaly_type` argument is not 'high' or 'low'.
+    TypeError
+        If the `ts` argument is not a Pandas Series.
     """
+
     logger.debug(f"extracting exceedances from dynamic threshold using anomaly_type={anomaly_type}, t0={t0}, q={q}")
 
     if anomaly_type not in ["high", "low"]:
@@ -99,7 +147,7 @@ def get_exceedance_peaks_over_threshold(
 
 def get_anomaly_score(ts: pd.Series, t0: int, gpd_params: typing.Dict) -> pd.Series:
     """
-    Fit exceedances into generalized pareto distribution to calculate the anomaly score.
+    Calculate the anomaly score for each data point in a time series based on the Generalized Pareto Distribution (GPD).
 
     Anomaly Score = 1 / (1 - CDF(exceedance, c, loc, scale))
 
@@ -109,16 +157,51 @@ def get_anomaly_score(ts: pd.Series, t0: int, gpd_params: typing.Dict) -> pd.Ser
         The Pandas Series that contains the exceedances.
 
     t0 : int
-        Time window to get the first day of t1 time window for dynamic window fitting.
+        Time window to get the first day of the T1 time window for dynamic window fitting.
 
-    gpd_params : dictionary
+    gpd_params : dict
         A dictionary used as the storage of the GPD parameters (fitting result).
 
     ## Returns
     ----------
-    anomaly_scores : pandas.Series
+    pd.Series
         A Pandas Series with anomaly scores (inverted p-value) as its values.
+
+    ## Example
+    ----------
+    >>> t0, t1, t2 = set_time_window(1000, "POT", "historical", t0_pct=0.7, t1_pct=0.2, t2_pct=0.1)
+    >>> params = {}
+    >>> anomaly_score_ts = get_anomaly_score(exceedance_ts, t0, params)
+    >>> anomaly_score_ts.head()
+    Date-Time
+    2016-10-29 00:00:00    0.0
+    2016-10-29 01:00:00    0.0
+    2016-10-29 02:00:00    0.0
+    2016-10-29 03:00:00    0.0
+    2016-10-29 04:00:00    0.0
+    Name: Example Dataset, dtype: float64
+    ...
+    >>> params
+    {0: {'datetime': Timestamp('2016-10-29 03:00:00'),
+    'c': 0.0,
+    'loc': 0.0,
+    'scale': 0.0,
+    'p_value': 0.0,
+    'anomaly_score': 0.0},
+    1: {'datetime': Timestamp('2016-10-29 04:00:00'),
+    ...
+    'loc': 0,
+    'scale': 0.19125308567629334,
+    'p_value': 0.19286132173263668,
+    'anomaly_score': 5.1850728337654886},
+    ...}
+
+    ## Raises
+    ---------
+    TypeError
+        If the `ts` argument is not a Pandas Series.
     """
+
     logger.debug(
         f"calculating anomaly score using t0={t0}, scipy.stats.genpareto.fit(), and scipy.stats.genpareto.sf()"
     )
@@ -177,7 +260,7 @@ def get_anomaly_score(ts: pd.Series, t0: int, gpd_params: typing.Dict) -> pd.Ser
 
 def get_anomaly_threshold(ts: pd.Series, t1: int, q: float = 0.90) -> float:
     """
-    Claculate a threshold with quantile method used for the comparison to get the anomalies.
+    Calculate a dynamic threshold based on quantiles used for comparing anomaly scores.
 
     ## Parameters
     -------------
@@ -187,14 +270,27 @@ def get_anomaly_threshold(ts: pd.Series, t1: int, q: float = 0.90) -> float:
     t1 : int
         Time window to calculate the quantile score of all anomaly scores.
 
-    q : float
-        The quantile to use for thresholding, default 0.90.
+    q : float, default is 0.90
+        The quantile used for thresholding.
 
     ## Returns
     ----------
-    anomaly_threshold : float
-        A single float serves as the threshold for anomalous data.
+    float
+        A single float value serving as the threshold for anomalous data.
+
+    ## Example
+    ----------
+    >>> t0, t1, t2 = set_time_window(1000, "POT", "historical", t0_pct=0.7, t1_pct=0.2, t2_pct=0.1)
+    >>> anomaly_threshold = compute_anomaly_threshold(anomaly_score_ts, t1, 0.90)
+    >>> print(anomaly_threshold)
+    9.167442809714414
+
+    ## Raises
+    ---------
+    TypeError
+        If the `ts` argument is not a Pandas Series.
     """
+
     logger.debug(f"calculating anomaly threshold using t1={t1}, q={q}, and `numpy.quantile()` function")
 
     if not isinstance(ts, pd.Series):
@@ -212,7 +308,7 @@ def get_anomaly_threshold(ts: pd.Series, t1: int, q: float = 0.90) -> float:
 
 def get_anomaly(ts: pd.Series, t1: int, q: float = 0.90) -> pd.Series:
     """
-    Detect the anomaloous data by comparing anoamly scores with anomaly threshold.
+    Detect anomalous data points by comparing anomaly scores with the anomaly threshold.
 
     ## Parameters
     -------------
@@ -220,16 +316,35 @@ def get_anomaly(ts: pd.Series, t1: int, q: float = 0.90) -> pd.Series:
         The Pandas Series that contains the anomaly scores.
 
     t1 : int
-        Time window to calculate anomaly threshold and retrieve t2 anomaly scores.
+        Time window to calculate the anomaly threshold and retrieve T2 anomaly scores.
 
-    q : float
-        The quantile to use for thresholding, default 0.90.
+    q : float, default is 0.90
+        The quantile used for thresholding.
 
     ## Returns
     ----------
-    anomalies : pandas.Series
-        A Pandas Series that reveals which value is anomalous.
+    pd.Series
+        A Pandas Series indicating which values are anomalous.
+
+    ## Example
+    ----------
+    >>> t0, t1, t2 = set_time_window(1000, "POT", "historical", t0_pct=0.7, t1_pct=0.2, t2_pct=0.1)
+    >>> anomaly_ts = pot_detecto.detect(anomaly_score_ts, t1, 0.90)
+    >>> anomaly_ts.head()
+    Date-Time
+    2019-02-09 08:00:00    False
+    2019-02-09 09:00:00    False
+    2019-02-09 10:00:00    False
+    2019-02-09 11:00:00    False
+    2019-02-09 12:00:00    False
+    Name: Example Dataset, dtype: bool
+
+    ## Raises
+    -------
+    TypeError
+        If the `ts` argument is not a Pandas Series.
     """
+
     logger.debug(f"detecting anomaly using t1={t1}, q={q}, and `get_anoamly_threshold()` function")
 
     if not isinstance(ts, pd.Series):

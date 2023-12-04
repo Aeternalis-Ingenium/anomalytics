@@ -35,10 +35,17 @@ def ks_1sample(
     fit_params : typing.Dict
         The result of fitting e.g. c, loc, scale.
 
-    # Returns
-    ---------
+    ## Returns
+    ----------
     ks_result : typing.Dict
         A storage that contains the result of Kolmogorov Smirnov and other analysis details such as fitting params, first, and last datetime.
+
+    ## Example
+    ----------
+    >>> ks_result = ks_1sample(ts=exceedance_df, stats_method="POT", fit_params=params)
+    >>> print(ks_result)
+    ...
+    {'total_nonzero_exceedances': 1079, 'start_datetime': '2023-10-10T00:00:00.000Z', 'end_datetime': '2023-10-11T01:00:00.000Z', 'stats_distance': 0.7884, 'p_value': 0.8987, 'c': -2.324, 'loc': 0, 'scale': 0.025}
     """
     logger.debug(f"performing kolmogorov smirnov test for stats_method={stats_method} with fit_params={fit_params}")
 
