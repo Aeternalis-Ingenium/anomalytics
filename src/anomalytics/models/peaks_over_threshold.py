@@ -101,11 +101,17 @@ class POTDetector(Detector):
 
         logger.info("successfully initialized POT detection model")
 
-    def set_time_window(self, t0_pct: float = 0.65, t1_pct: float = 0.25, t2_pct: float = 0.10) -> None:
+    def set_time_window(
+        self,
+        analysis_type: typing.Literal["historical", "real-time"] = "historical",
+        t0_pct: float = 0.65,
+        t1_pct: float = 0.25,
+        t2_pct: float = 0.10,
+    ) -> None:
         self.__time_window = set_time_window(
             total_rows=self.__dataset.shape[0],
             method="POT",
-            analysis_type="real-time",
+            analysis_type=analysis_type,
             t0_pct=t0_pct,
             t1_pct=t1_pct,
             t2_pct=t2_pct,
@@ -114,6 +120,9 @@ class POTDetector(Detector):
     def get_extremes(self, q: float = 0.90) -> None:
         if isinstance(self.__dataset, pd.DataFrame):
             pass
+
+        if self.__time_window is None:
+            self.set_time_window()
 
         self.__exceedance_threshold = get_threshold_peaks_over_threshold(
             ts=self.__dataset, t0=self.__time_window[0], anomaly_type=self.__anomaly_type, q=q

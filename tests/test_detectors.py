@@ -75,6 +75,7 @@ class TestDetector(TestCase):
         self.svm_detector = atics.get_detector(method="1CSVM", dataset=self.sample_1_ts)
         self.pot_detector = atics.get_detector(method="POT", dataset=self.sample_1_ts)
         self.zs_detector = atics.get_detector(method="ZS", dataset=self.sample_1_ts)
+        self.pot_detector.set_time_window(analysis_type="historical", t0_pct=0.65, t1_pct=0.25, t2_pct=0.1)
 
     def test_detector_instance_is_abstract_class(self):
         self.assertIsInstance(obj=self.ae_detector, cls=Detector)
@@ -148,7 +149,7 @@ class TestDetector(TestCase):
         self.assertEqual(self.pot_detector._POTDetector__params[0], expected_params[0])
 
     def test_pot_detector_compute_anomaly_threshold_method(self):
-        expected_anomalies = [True]
+        expected_anomalies = [False]
         expected_anomaly_threshold = 1.2394417670604552
         pot_detector = atics.get_detector(method="POT", dataset=self.sample_2_ts, anomaly_type="high")
 
@@ -170,7 +171,7 @@ class TestDetector(TestCase):
         expected_kstest_result = pd.DataFrame(
             data={
                 "total_nonzero_exceedances": [50],
-                "stats_distance": [0.9798328261695748],
+                "stats_distance": [0.9798585458338519],
                 "p_value": [3.414145934563587e-85],
                 "c": [-1.3371948412738648],
                 "loc": [0],
