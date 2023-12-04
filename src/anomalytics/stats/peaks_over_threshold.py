@@ -182,8 +182,8 @@ def get_anomaly_threshold(ts: pd.Series, t1: int, q: float = 0.90) -> float:
     t1 : int
         Time window to calculate the quantile score of all anomaly scores.
 
-    gpd_params : dictionary
-        A dictionary used as the storage of the GPD parameters (fitting result).
+    q : float
+        The quantile to use for thresholding, default 0.90.
 
     ## Returns
     ----------
@@ -201,3 +201,37 @@ def get_anomaly_threshold(ts: pd.Series, t1: int, q: float = 0.90) -> float:
         a=t1_anomaly_scores.values,
         q=q,
     )
+
+
+def get_anomaly(ts: pd.Series, t1: int, q: float = 0.90) -> pd.Series:
+    """
+    Detect the anomaloous data by comparing anoamly scores with anomaly threshold.
+
+    ## Parameters
+    -------------
+    ts : pandas.Series
+        The Pandas Series that contains the anomaly scores.
+
+    t1 : int
+        Time window to calculate anomaly threshold and retrieve t2 anomaly scores.
+
+    q : float
+        The quantile to use for thresholding, default 0.90.
+
+    ## Returns
+    ----------
+    anomalies : pandas.Series
+        A Pandas Series that reveals which value is anomalous.
+    """
+    logger.debug(f"detecting anomaly using t1={t1}, q={q}, and `get_anoamly_threshold()` function")
+    if not isinstance(ts, pd.Series):
+        raise TypeError("Invalid value! The `ts` argument must be a Pandas Series")
+
+    anomaly_threshold = get_anomaly_threshold(ts=ts, t1=t1, q=q)
+    t2_anomaly_scores = ts.iloc[t1:]
+    anomalies = t2_anomaly_scores > anomaly_threshold
+
+    logger.debug(
+        f"successfully detecting {len(anomalies[anomalies.values == True].values)} anomalies using anomaly_threshold={anomaly_threshold}"
+    )
+    return pd.Series(index=t2_anomaly_scores.index, data=anomalies.values, name="anomalies")
