@@ -6,6 +6,8 @@ import warnings
 import numpy as np
 import pandas as pd
 
+from anomalytics.evals.kolmogorv_smirnov import ks_1sample
+from anomalytics.evals.qq_plot import visualize_qq_plot
 from anomalytics.models.abstract import Detector
 from anomalytics.stats.peaks_over_threshold import (
     get_anomaly,
@@ -131,8 +133,10 @@ class POTDetector(Detector):
         self.__anomaly_threshold = get_anomaly_threshold(ts=self.__anomaly_score, t1=self.__time_window[1], q=q)
         self.__anomaly = get_anomaly(ts=self.__anomaly_score, t1=self.__time_window[1], q=q)
 
-    def evaluate(self) -> None:
-        raise NotImplementedError("Not yet implemented!")
+    def evaluate(self, method: typing.Literal["ks", "qq"] = "ks") -> None:
+        params = self.__get_nonzero_params
+        if method == "ks":
+            self.__eval = ks_1sample(ts=self.__exceedance, stats_method="POT", fit_params=params)
 
     @property
     def __get_nonzero_params(self) -> typing.List[typing.Dict[str, typing.Union[datetime.datetime, float]]]:
