@@ -69,5 +69,28 @@ class TestDetector(TestCase):
         )
         pd.testing.assert_series_equal(self.pot_detector._POTDetector__exceedance, expected_exceedance)
 
+    def test_genpareto_fit_from_pot_detecto(self):
+        self.pot_detector.get_extremes(q=0.90)
+        self.pot_detector.fit()
+
+        expected_anomaly_scores = pd.Series(
+            data=[1.922777880970598, 2.445890926224859, 3.6935717350888506, 3121651314.625431],
+            index=self.sample_1_ts.index[6:],
+            name="anomaly scores",
+        )
+        expected_params = {
+            0: {
+                "index": pd.Timestamp("2023-01-07 00:00:00"),
+                "c": -1.6804238287454643,
+                "loc": 0,
+                "scale": 1.5123814458709186,
+                "p_value": 0.5200808735615424,
+                "anomaly_score": 1.922777880970598,
+            },
+        }
+
+        pd.testing.assert_series_equal(self.pot_detector._POTDetector__anomaly_score, expected_anomaly_scores)
+        self.assertEqual(self.pot_detector._POTDetector__params[0], expected_params[0])
+
     def tearDown(self) -> None:
         return super().tearDown()
