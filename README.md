@@ -21,13 +21,13 @@
     <a href="https://github.com/Aeternalis-Ingenium/anomalytics/actions/workflows/build.yaml">
         <img src="https://github.com/Aeternalis-Ingenium/anomalytics/actions/workflows/build.yaml/badge.svg" alt="CI - Build">
     </a>
-    <a href="https://github.com/Aeternalis-Ingenium/anomalytics/actions/workflows/code-style.yaml">
-        <img src="https://github.com/Aeternalis-Ingenium/anomalytics/actions/workflows/code-style.yaml/badge.svg" alt="CI - Code Style">
+    <a href="https://github.com/Aeternalis-Ingenium/anomalytics/actions/workflows/code-quality.yaml">
+        <img src="https://github.com/Aeternalis-Ingenium/anomalytics/actions/workflows/code-quality.yaml/badge.svg" alt="CI - Code Quality">
     </a>
     <a href="https://github.com/Aeternalis-Ingenium/anomalytics/actions/workflows/test.yaml">
-        <img src="https://github.com/Aeternalis-Ingenium/anomalytics/actions/workflows/test.yaml/badge.svg" alt="CI - Test">
+        <img src="https://github.com/Aeternalis-Ingenium/anomalytics/actions/workflows/test.yaml/badge.svg" alt="CI - Automated Testing">
     </a>
-    <a href="https://opensource.org/licenses/MIT">
+    <a href="https://github.com/Aeternalis-Ingenium/anomalytics/blob/trunk/LICENSE">
         <img src="https://img.shields.io/badge/License-MIT-yellow.svg" alt="License: MIT">
     </a>
     <!-- Replace the '#' in the href with your documentation link -->
