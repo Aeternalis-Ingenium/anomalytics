@@ -243,7 +243,7 @@ class POTDetector(Detector):
         elif plot_type == "l+eth":
             plot_line(
                 dataset=self.__dataset,
-                threshold=self.__exceedance_threshold.values,
+                threshold=self.__exceedance_threshold,
                 title=title,
                 xlabel=xlabel,
                 ylabel=ylabel,
