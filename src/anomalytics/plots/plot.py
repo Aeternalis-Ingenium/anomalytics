@@ -8,7 +8,7 @@ import scipy.stats as stats
 
 def plot_line(
     dataset: typing.Union[pd.DataFrame, pd.Series],
-    threshold: typing.Union[pd.DataFrame, pd.Series, float],
+    threshold: typing.Union[pd.DataFrame, pd.Series, typing.List[typing.Union[float, int]], int, float, None],
     title: str,
     xlabel: str,
     ylabel: str,
@@ -39,7 +39,7 @@ def plot_hist(
     title: str,
     xlabel: str,
     ylabel: str,
-    bins: int = 50,
+    bins: typing.Optional[int] = 50,
     plot_width: int = 13,
     plot_height: int = 8,
     plot_color: str = "black",
@@ -60,7 +60,7 @@ def plot_gen_pareto(
     title: str,
     xlabel: str,
     ylabel: str,
-    bins: int = 50,
+    bins: typing.Optional[int] = 50,
     plot_width: int = 13,
     plot_height: int = 8,
     plot_color: str = "black",

@@ -9,6 +9,7 @@ import pandas as pd
 from anomalytics.evals.kolmogorv_smirnov import ks_1sample
 from anomalytics.evals.qq_plot import visualize_qq_plot
 from anomalytics.models.abstract import Detector
+from anomalytics.plots.plot import plot_gen_pareto, plot_hist, plot_line
 from anomalytics.stats.peaks_over_threshold import (
     get_anomaly,
     get_anomaly_score,
@@ -191,6 +192,108 @@ class POTDetector(Detector):
                 "Invalid value! Available `set_type` values: 'exceedance_threshold', 'exceedance', 'anomaly', 'anomaly_threshold', 'anomaly_score'"
             )
         return dataset
+
+    def plot(
+        self,
+        plot_type: typing.Literal["l", "l+eth", "l+ath", "hist", "gpd", "gpd+ov"],
+        title: str,
+        xlabel: str,
+        ylabel: str,
+        bins: typing.Optional[int] = 50,
+        plot_width: int = 13,
+        plot_height: int = 8,
+        plot_color: str = "black",
+        th_color: str = "red",
+        th_type: str = "dashed",
+        th_line_width: int = 2,
+        alpha: float = 0.8,
+    ):
+        if plot_type == "l":
+            plot_line(
+                dataset=self.__dataset,
+                threshold=None,
+                title=title,
+                xlabel=xlabel,
+                ylabel=ylabel,
+                is_threshold=False,
+                plot_width=plot_width,
+                plot_height=plot_height,
+                plot_color=plot_color,
+                th_color=th_color,
+                th_type=th_type,
+                th_line_width=th_line_width,
+                alpha=alpha,
+            )
+        elif plot_type == "l+ath":
+            plot_line(
+                dataset=self.__exceedance,
+                threshold=self.__anomaly_threshold,
+                title=title,
+                xlabel=xlabel,
+                ylabel=ylabel,
+                is_threshold=True,
+                plot_width=plot_width,
+                plot_height=plot_height,
+                plot_color=plot_color,
+                th_color=th_color,
+                th_type=th_type,
+                th_line_width=th_line_width,
+                alpha=alpha,
+            )
+        elif plot_type == "l+eth":
+            plot_line(
+                dataset=self.__dataset,
+                threshold=self.__exceedance_threshold.values,
+                title=title,
+                xlabel=xlabel,
+                ylabel=ylabel,
+                is_threshold=True,
+                plot_width=plot_width,
+                plot_height=plot_height,
+                plot_color=plot_color,
+                th_color=th_color,
+                th_type=th_type,
+                th_line_width=th_line_width,
+                alpha=alpha,
+            )
+        elif plot_type == "hist":
+            plot_hist(
+                dataset=self.__dataset,
+                title=title,
+                xlabel=xlabel,
+                ylabel=ylabel,
+                bins=bins,
+                plot_width=plot_width,
+                plot_height=plot_height,
+                plot_color=plot_color,
+                alpha=alpha,
+            )
+        elif plot_type == "gpd":
+            plot_gen_pareto(
+                dataset=self.__exceedance,
+                title=title,
+                xlabel=xlabel,
+                ylabel=ylabel,
+                bins=bins,
+                plot_width=plot_width,
+                plot_height=plot_height,
+                plot_color=plot_color,
+                alpha=alpha,
+                params=None,
+            )
+        elif plot_type == "gpd+ov":
+            plot_gen_pareto(
+                dataset=self.__exceedance,
+                title=title,
+                xlabel=xlabel,
+                ylabel=ylabel,
+                bins=bins,
+                plot_width=plot_width,
+                plot_height=plot_height,
+                plot_color=plot_color,
+                alpha=alpha,
+                params=self.__params,
+            )
 
     def __str__(self) -> str:
         return "POT"
