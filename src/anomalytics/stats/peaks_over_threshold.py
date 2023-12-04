@@ -167,3 +167,34 @@ def get_anomaly_score(ts: pd.Series, t0: int, gpd_params: typing.Dict) -> pd.Ser
             anomaly_scores.append(0.0)
     logger.debug(f"successfully calculating anomaly score")
     return pd.Series(index=ts.index[t0:], data=anomaly_scores, name="anomaly scores")
+
+
+def get_anomaly_threshold(ts: pd.Series, t1: int, q: float = 0.90) -> float:
+    """
+    Claculate a threshold with quantile method used for the comparison to get the anomalies.
+
+    ## Parameters
+    -------------
+    ts : pandas.Series
+        The Pandas Series that contains the anomaly scores.
+
+    t1 : int
+        Time window to calculate the quantile score of all anomaly scores.
+
+    gpd_params : dictionary
+        A dictionary used as the storage of the GPD parameters (fitting result).
+
+    ## Returns
+    ----------
+    anomaly_threshold : float
+        A single float serves as the threshold for anomalous data.
+    """
+    if not isinstance(ts, pd.Series):
+        raise TypeError("Invalid value! The `ts` argument must be a Pandas Series")
+
+    t1_anomaly_scores = ts[(ts.values > 0) & (ts.values != float("inf"))].iloc[:t1]
+
+    return np.quantile(
+        a=t1_anomaly_scores.values,
+        q=q,
+    )
