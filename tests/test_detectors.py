@@ -41,5 +41,33 @@ class TestDetector(TestCase):
         self.assertEqual(first=str(self.pot_detector), second="POT")
         self.assertEqual(first=str(self.zs_detector), second="ZS")
 
+    def test_get_extremes_pot(self):
+        self.pot_detector.get_extremes(q=0.9)
+
+        expected_exceedance_threshold = pd.Series(
+            [5.5, 5.5, 5.5, 5.5, 5.5, 5.5, 6.4, 7.3, 8.2, 9.1], index=self.sample_1_ts.index
+        )
+        expected_exceedance = pd.Series(
+            [
+                0.0,
+                0.0,
+                0.0,
+                0.0,
+                0.0,
+                0.5,
+                0.5999999999999996,
+                0.7000000000000002,
+                0.8000000000000007,
+                0.9000000000000004,
+            ],
+            index=self.sample_1_ts.index,
+            name="exceedances",
+        )
+
+        pd.testing.assert_series_equal(
+            self.pot_detector._POTDetector__exceedance_threshold, expected_exceedance_threshold
+        )
+        pd.testing.assert_series_equal(self.pot_detector._POTDetector__exceedance, expected_exceedance)
+
     def tearDown(self) -> None:
         return super().tearDown()
