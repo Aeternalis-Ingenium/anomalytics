@@ -113,7 +113,11 @@ class POTDetector(Detector):
         )
 
     def fit(self) -> None:
-        raise NotImplementedError("Not yet implemented!")
+        if isinstance(self.__dataset, pd.DataFrame):
+            pass
+        self.__anomaly_score = get_anomaly_score(
+            ts=self.__exceedance, t0=self.__time_window[0], gpd_params=self.__params
+        )
 
     def detect(self) -> None:
         raise NotImplementedError("Not yet implemented!")
