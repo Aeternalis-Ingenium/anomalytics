@@ -38,8 +38,9 @@ def get_threshold_peaks_over_threshold(
 
     ## Example
     ----------
-    >>> pot_threshold_df = pot_detecto.compute_exceedance_threshold(df, "high", 0.95)
-    >>> pot_threshold_df.tail()
+    >>> t0, t1, t2 = set_time_window(1000, "POT", "historical", t0_pct=0.7, t1_pct=0.2, t2_pct=0.1)
+    >>> pot_threshold_ts = get_threshold_peaks_over_threshold(ts, t0, "high", 0.95)
+    >>> pot_threshold_ts.tail()
     Date-Time
     2020-03-31 19:00:00    0.867
     2020-03-31 20:00:00    0.867
@@ -104,8 +105,9 @@ def get_exceedance_peaks_over_threshold(
 
     ## Example
     ----------
-    >>> exceedance_df = pot_detecto.extract_exceedance(df, "high", pot_threshold_df)
-    >>> exceedance_df.tail()
+    >>> t0, t1, t2 = set_time_window(1000, "POT", "historical", t0_pct=0.7, t1_pct=0.2, t2_pct=0.1)
+    >>> exceedance_ts = get_exceedance_peaks_over_threshold(ts, t0, "high", 0.95)
+    >>> exceedance_ts.tail()
     Date-Time
     2020-03-31 19:00:00    0.867
     2020-03-31 20:00:00    0.867
@@ -167,8 +169,10 @@ def get_anomaly_score(ts: pd.Series, t0: int, gpd_params: typing.Dict) -> pd.Ser
 
     ## Example
     ----------
-    >>> anomaly_score_df = pot_detecto.extract_exceedance(df, "high", pot_threshold_df)
-    >>> anomaly_score_df.head()
+    >>> t0, t1, t2 = set_time_window(1000, "POT", "historical", t0_pct=0.7, t1_pct=0.2, t2_pct=0.1)
+    >>> params = {}
+    >>> anomaly_score_ts = get_anomaly_score(exceedance_ts, t0, params)
+    >>> anomaly_score_ts.head()
     Date-Time
     2016-10-29 00:00:00    0.0
     2016-10-29 01:00:00    0.0
@@ -176,6 +180,21 @@ def get_anomaly_score(ts: pd.Series, t0: int, gpd_params: typing.Dict) -> pd.Ser
     2016-10-29 03:00:00    0.0
     2016-10-29 04:00:00    0.0
     Name: Example Dataset, dtype: float64
+    ...
+    >>> params
+    {0: {'datetime': Timestamp('2016-10-29 03:00:00'),
+    'c': 0.0,
+    'loc': 0.0,
+    'scale': 0.0,
+    'p_value': 0.0,
+    'anomaly_score': 0.0},
+    1: {'datetime': Timestamp('2016-10-29 04:00:00'),
+    ...
+    'loc': 0,
+    'scale': 0.19125308567629334,
+    'p_value': 0.19286132173263668,
+    'anomaly_score': 5.1850728337654886},
+    ...}
 
     ## Raises
     ---------
@@ -261,7 +280,8 @@ def get_anomaly_threshold(ts: pd.Series, t1: int, q: float = 0.90) -> float:
 
     ## Example
     ----------
-    >>> anomaly_threshold = pot_detecto.compute_anomaly_threshold(anomaly_score_df, 0.90)
+    >>> t0, t1, t2 = set_time_window(1000, "POT", "historical", t0_pct=0.7, t1_pct=0.2, t2_pct=0.1)
+    >>> anomaly_threshold = compute_anomaly_threshold(anomaly_score_ts, t1, 0.90)
     >>> print(anomaly_threshold)
     9.167442809714414
 
@@ -308,8 +328,9 @@ def get_anomaly(ts: pd.Series, t1: int, q: float = 0.90) -> pd.Series:
 
     ## Example
     ----------
-    >>> anomaly_df = pot_detecto.detect(anomaly_score_df, anomaly_threshold_df)
-    >>> anomaly_df.head()
+    >>> t0, t1, t2 = set_time_window(1000, "POT", "historical", t0_pct=0.7, t1_pct=0.2, t2_pct=0.1)
+    >>> anomaly_ts = pot_detecto.detect(anomaly_score_ts, t1, 0.90)
+    >>> anomaly_ts.head()
     Date-Time
     2019-02-09 08:00:00    False
     2019-02-09 09:00:00    False
