@@ -3,7 +3,8 @@ import unittest
 import numpy as np
 import pandas as pd
 
-from anomalytics.stats import get_exceedance_peaks_over_threshold, get_threshold_peaks_over_threshold
+from anomalytics import get_exceedance_peaks_over_threshold
+from anomalytics.stats import get_threshold_peaks_over_threshold
 
 
 class TestPeaksOverThreshold(unittest.TestCase):
@@ -58,7 +59,7 @@ class TestPeaksOverThreshold(unittest.TestCase):
 
     def test_invalid_t0_value_in_exceedance_extraction_function(self):
         with self.assertRaises(ValueError):
-            get_exceedance_peaks_over_threshold(ts=self.sample_2_ts, anomaly_type="high", q=0.90)  # type: ignore
+            get_exceedance_peaks_over_threshold(ts=self.sample_2_ts, t0=None, anomaly_type="high", q=0.90)  # type: ignore
 
     def tearDown(self) -> None:
         return super().tearDown()
