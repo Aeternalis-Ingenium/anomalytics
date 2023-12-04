@@ -8,7 +8,7 @@ on:
       - "fix/**/**"
       - "release/v*.*.*"
   workflow_run:
-    workflows: ["Code Quality"]
+    workflows: ["CI Code Quality"]
     types:
       - completed
 
