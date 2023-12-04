@@ -137,7 +137,6 @@ class POTDetector(Detector):
         params = self.__get_nonzero_params
         if method == "ks":
             self.__eval = ks_1sample(ts=self.__exceedance, stats_method="POT", fit_params=params)
-            return pd.DataFrame(data=self.__eval)
 
     @property
     def __get_nonzero_params(self) -> typing.List[typing.Dict[str, typing.Union[datetime.datetime, float]]]:

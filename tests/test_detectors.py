@@ -165,20 +165,18 @@ class TestDetector(TestCase):
         pot_detector.get_extremes(q=0.90)
         pot_detector.fit()
         pot_detector.detect(q=0.90)
-        kstest_result = pot_detector.evaluate(method="ks")
+        pot_detector.evaluate(method="ks")
 
-        expected_kstest_result = pd.DataFrame(
-            data={
-                "total_nonzero_exceedances": [50],
-                "stats_distance": [0.9798328261695748],
-                "p_value": [3.414145934563587e-85],
-                "c": [-1.3371948412738648],
-                "loc": [0],
-                "scale": [272179.457686573],
-            }
-        )
+        expected_kstest_result = {
+            "total_nonzero_exceedances": [50],
+            "stats_distance": [0.9798328261695748],
+            "p_value": [3.414145934563587e-85],
+            "c": [-1.3371948412738648],
+            "loc": [0],
+            "scale": [272179.457686573],
+        }
 
-        pd.testing.assert_frame_equal(kstest_result, expected_kstest_result)
+        self.assertEqual(pot_detector._POTDetector__eval, expected_kstest_result)
 
     def tearDown(self) -> None:
         return super().tearDown()
