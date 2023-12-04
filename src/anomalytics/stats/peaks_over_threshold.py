@@ -75,6 +75,7 @@ def get_exceedance_peaks_over_threshold(
     exceedances : pandas.Series
         A Pandas Series with values exceeding the POT thresholds.
     """
+    logger.debug(f"extracting exceedances from dynamic threshold using anomaly_type={anomaly_type}, t0={t0}, q={q}")
     if anomaly_type not in ["high", "low"]:
         raise ValueError(f"Invalid value! The `anomaly_type` argument must be 'high' or 'low'")
     if not isinstance(ts, pd.Series):
@@ -88,4 +89,5 @@ def get_exceedance_peaks_over_threshold(
         pot_exceedances = np.maximum(ts - pot_thresholds, 0.0)
     else:
         pot_exceedances = np.where(ts > pot_thresholds, 0.0, np.abs(ts - pot_thresholds))
+    logger.debug(f"successfully extracting exceedances from dynamic threshold for {anomaly_type} anomaly type")
     return pd.Series(index=ts.index, data=pot_exceedances, name="exceedances")
