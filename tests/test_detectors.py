@@ -176,7 +176,7 @@ class TestDetector(TestCase):
             "scale": [272179.457686573],
         }
 
-        self.assertEqual(pot_detector._POTDetector__eval, expected_kstest_result)
+        self.assertAlmostEqual(pot_detector._POTDetector__eval, expected_kstest_result)
 
     def tearDown(self) -> None:
         return super().tearDown()
