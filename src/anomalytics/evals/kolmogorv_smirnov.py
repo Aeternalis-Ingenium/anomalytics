@@ -46,7 +46,7 @@ def ks_1sample(
         raise TypeError("Invalid value! The `ts` argument must be a Pandas Series")
     if not isinstance(ts.index, pd.DatetimeIndex):
         try:
-            datetime_index = pd.to_datetime(ts.index)
+            datetime_index = pd.to_datetime(ts.index.values, utc=True)
             ts.index = datetime_index
         except Exception as err:
             raise SyntaxError("Syntax error! Fail to convert `ts.index` into pandas.DatetimeIndex.") from err
