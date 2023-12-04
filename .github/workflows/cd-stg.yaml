@@ -1,11 +1,9 @@
-name: CD PyPi
+name: CD PyPi Staging
 
 on:
   workflow_dispatch:
   push:
     branches:
-      - "feature/**/**"
-      - "fix/**/**"
       - "release/v*.*.*"
   workflow_run:
     workflows: ["CI Automated Testing"]
@@ -13,7 +11,7 @@ on:
       - completed
 
 jobs:
-  build-distribution:
+  build-staging-distribution:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v4.1.0
@@ -39,16 +37,13 @@ jobs:
   publish-to-testpypi:
     name: Publish Python 🐍 distribution 📦 to TestPyPI
     needs:
-    - build
+    - build-staging-distribution
     runs-on: ubuntu-latest
-
     environment:
       name: testpypi
       url: https://test.pypi.org/p/anomalytics
-
     permissions:
       id-token: write
-
     steps:
     - name: Download all the dists
       uses: actions/download-artifact@v3
