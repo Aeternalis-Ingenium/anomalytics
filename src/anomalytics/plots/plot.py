@@ -8,7 +8,7 @@ import scipy.stats as stats
 
 def plot_line(
     dataset: typing.Union[pd.DataFrame, pd.Series],
-    threshold: typing.Union[pd.DataFrame, pd.Series, typing.List[typing.Union[float, int]], int, float, None],
+    threshold: typing.Union[pd.Series, float, None],
     title: str,
     xlabel: str,
     ylabel: str,
@@ -25,7 +25,10 @@ def plot_line(
     plt.plot(dataset.index, dataset.values, color=plot_color, alpha=alpha)
 
     if is_threshold:
-        plt.axhline(threshold, c=th_color, ls=th_type, lw=th_line_width)  # type ignore
+        if type(threshold) == float:
+            plt.axhline(threshold, c=th_color, ls=th_type, lw=th_line_width)
+        elif isinstance(threshold, pd.Series):
+            plt.plot(dataset.index, threshold.values, c=th_color, ls=th_type, lw=th_line_width)
     plt.title(title)
     plt.xlabel(xlabel)
     plt.ylabel(ylabel)
