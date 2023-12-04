@@ -1,4 +1,3 @@
-import datetime
 import logging
 import typing
 
@@ -95,7 +94,7 @@ def get_exceedance_peaks_over_threshold(
     return pd.Series(index=ts.index, data=pot_exceedances, name="exceedances")
 
 
-def fit_exceedance(ts: pd.Series, t0: int, gpd_params: typing.Dict) -> pd.Series:
+def get_anomaly_score(ts: pd.Series, t0: int, gpd_params: typing.Dict) -> pd.Series:
     """
     Fit exceedances into generalized pareto distribution to calculate the anomaly score.
 
@@ -166,5 +165,73 @@ def fit_exceedance(ts: pd.Series, t0: int, gpd_params: typing.Dict) -> pd.Series
                 anomaly_score=0.0,
             )
             anomaly_scores.append(0.0)
+
     logger.debug(f"successfully calculating anomaly score")
     return pd.Series(index=ts.index[t0:], data=anomaly_scores, name="anomaly scores")
+
+
+def get_anomaly_threshold(ts: pd.Series, t1: int, q: float = 0.90) -> float:
+    """
+    Claculate a threshold with quantile method used for the comparison to get the anomalies.
+
+    ## Parameters
+    -------------
+    ts : pandas.Series
+        The Pandas Series that contains the anomaly scores.
+
+    t1 : int
+        Time window to calculate the quantile score of all anomaly scores.
+
+    q : float
+        The quantile to use for thresholding, default 0.90.
+
+    ## Returns
+    ----------
+    anomaly_threshold : float
+        A single float serves as the threshold for anomalous data.
+    """
+    logger.debug(f"calculating anomaly threshold using t1={t1}, q={q}, and `numpy.quantile()` function")
+    if not isinstance(ts, pd.Series):
+        raise TypeError("Invalid value! The `ts` argument must be a Pandas Series")
+
+    t1_anomaly_scores = ts[(ts.values > 0) & (ts.values != float("inf"))].iloc[:t1]
+
+    logger.debug(f"successfully calculating anomaly threshold using {q} quantile")
+    return np.quantile(
+        a=t1_anomaly_scores.values,
+        q=q,
+    )
+
+
+def get_anomaly(ts: pd.Series, t1: int, q: float = 0.90) -> pd.Series:
+    """
+    Detect the anomaloous data by comparing anoamly scores with anomaly threshold.
+
+    ## Parameters
+    -------------
+    ts : pandas.Series
+        The Pandas Series that contains the anomaly scores.
+
+    t1 : int
+        Time window to calculate anomaly threshold and retrieve t2 anomaly scores.
+
+    q : float
+        The quantile to use for thresholding, default 0.90.
+
+    ## Returns
+    ----------
+    anomalies : pandas.Series
+        A Pandas Series that reveals which value is anomalous.
+    """
+    logger.debug(f"detecting anomaly using t1={t1}, q={q}, and `get_anoamly_threshold()` function")
+    if not isinstance(ts, pd.Series):
+        raise TypeError("Invalid value! The `ts` argument must be a Pandas Series")
+
+    anomaly_threshold = get_anomaly_threshold(ts=ts, t1=t1, q=q)
+    t2_anomaly_scores = ts.iloc[t1:]
+    anomalies = t2_anomaly_scores > anomaly_threshold
+
+    logger.debug(
+        f"successfully detecting {len(anomalies[anomalies.values == True].values)} anomalies using anomaly_threshold={anomaly_threshold}"
+    )
+    return pd.Series(index=t2_anomaly_scores.index, data=anomalies.values, name="anomalies")
