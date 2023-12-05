@@ -5,10 +5,6 @@ on:
   push:
     branches:
       - "release/v*.*.*"
-  workflow_run:
-    workflows: ["CI Automated Testing"]
-    types:
-      - completed
 
 jobs:
   build-testpypi-distribution:
