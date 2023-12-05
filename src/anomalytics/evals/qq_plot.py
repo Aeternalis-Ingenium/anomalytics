@@ -204,7 +204,7 @@ def visualize_qq_plot(
 
     elif stats_method == "POT":
         scatter_label = f"{len(sorted_nonzero_ts)} Exceedances > 0"
-        plot_label = f"\nFitted GPD Params:\n  datetime: {params['datetime']}\n  c: {round(params['c'], 3)}\n  loc: {round(params['loc'], 3)}\n  scale: {round(params['scale'], 3)}"  # type: ignore
+        plot_label = f"\nFitted GPD Params:\n  c: {round(params['c'], 3)}\n  loc: {round(params['loc'], 3)}\n  scale: {round(params['scale'], 3)}"  # type: ignore
         suptitle = "QQ Plot - GPD"
 
     elif stats_method == "ZS":
