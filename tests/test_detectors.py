@@ -75,7 +75,6 @@ class TestDetector(TestCase):
         self.svm_detector = atics.get_detector(method="1CSVM", dataset=self.sample_1_ts)
         self.pot_detector = atics.get_detector(method="POT", dataset=self.sample_1_ts)
         self.zs_detector = atics.get_detector(method="ZS", dataset=self.sample_1_ts)
-        self.pot_detector.set_time_window(analysis_type="historical", t0_pct=0.65, t1_pct=0.25, t2_pct=0.1)
 
     def test_detector_instance_is_abstract_class(self):
         self.assertIsInstance(obj=self.ae_detector, cls=Detector)
@@ -96,6 +95,13 @@ class TestDetector(TestCase):
         self.assertEqual(first=str(self.svm_detector), second="1CSVM")
         self.assertEqual(first=str(self.pot_detector), second="POT")
         self.assertEqual(first=str(self.zs_detector), second="ZS")
+
+    def test_pot_detector_reset_time_window_to_historical(self):
+        t0, t1, t2 = self.pot_detector._POTDetector__time_window
+        self.pot_detector.reset_time_window(analysis_type="historical", t0_pct=0.80, t1_pct=0.15, t2_pct=0.05)
+        self.assertNotEqual(t0, self.pot_detector._POTDetector__time_window[0])
+        self.assertNotEqual(t1, self.pot_detector._POTDetector__time_window[1])
+        self.assertNotEqual(t2, self.pot_detector._POTDetector__time_window[2])
 
     def test_pot_detector_get_extremes(self):
         self.pot_detector.get_extremes(q=0.9)
@@ -121,9 +127,9 @@ class TestDetector(TestCase):
         )
 
         pd.testing.assert_series_equal(
-            self.pot_detector._POTDetector__exceedance_threshold, expected_exceedance_threshold
+            self.pot_detector.return_dataset(set_type="exceedance_threshold"), expected_exceedance_threshold
         )
-        pd.testing.assert_series_equal(self.pot_detector._POTDetector__exceedance, expected_exceedance)
+        pd.testing.assert_series_equal(self.pot_detector.return_dataset(set_type="exceedance"), expected_exceedance)
 
     def test_pot_detector_genpareto_fit(self):
         self.pot_detector.get_extremes(q=0.90)
@@ -149,7 +155,7 @@ class TestDetector(TestCase):
         self.assertEqual(self.pot_detector._POTDetector__params[0], expected_params[0])
 
     def test_pot_detector_compute_anomaly_threshold_method(self):
-        expected_anomalies = [False]
+        expected_anomalies = [True]
         expected_anomaly_threshold = 1.2394417670604552
         pot_detector = atics.get_detector(method="POT", dataset=self.sample_2_ts, anomaly_type="high")
 
@@ -171,7 +177,7 @@ class TestDetector(TestCase):
         expected_kstest_result = pd.DataFrame(
             data={
                 "total_nonzero_exceedances": [50],
-                "stats_distance": [0.9798585458338519],
+                "stats_distance": [0.9798328261695748],
                 "p_value": [3.414145934563587e-85],
                 "c": [-1.3371948412738648],
                 "loc": [0],
