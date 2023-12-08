@@ -145,14 +145,38 @@ class POTDetector(Detector):
 
     @property
     def t0(self) -> int:
+        """
+        The time window used to extract the exceedances.a
+
+        ## Returns
+        ----------
+        t0 : int
+            The `t0` time window.
+        """
         return self.__time_window[0]
 
     @property
     def t1(self) -> int:
+        """
+        The time window used to compute the anomaly threshold.
+
+        ## Returns
+        ----------
+        t1 : int
+            The `t1` time window.
+        """
         return self.__time_window[1]
 
     @property
     def t2(self) -> int:
+        """
+        The time window that contains the target period for the detection.
+
+        ## Returns
+        ----------
+        t2 : int
+            The `t2` time window.
+        """
         return self.__time_window[2]
 
     def get_extremes(self, q: float = 0.90) -> None:
@@ -258,8 +282,28 @@ class POTDetector(Detector):
         return nonzero_params
 
     @property
-    def params(self) -> dict:  # type: ignore
+    def params(self) -> typing.Dict:
+        """
+        The GPD parameters from the method `fit()`.
+
+        ## Returns
+        ----------
+        params : typing.Dict
+            The GPD parameters.
+        """
         return self.__params
+
+    @property
+    def anomaly_threshold(self) -> float:
+        """
+        The anomaly threshold computed by the quantile method in `detect()`.
+
+        ## Returns
+        ----------
+        anomaly_threshold : float
+            The anomaly threshold.
+        """
+        return self.__anomaly_threshold
 
     def return_dataset(
         self,
