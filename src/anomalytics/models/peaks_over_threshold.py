@@ -115,6 +115,25 @@ class POTDetector(Detector):
         t1_pct: float = 0.25,
         t2_pct: float = 0.10,
     ) -> None:
+        """
+        Set a new time range for `t0`, `t1`, and `t2`.
+
+        ## Parameters
+        ----------
+        analysis_type : typing.Literal["historical", "real-time"], default is "historical"
+            The type of analysis defines the t2 time window.
+            * t2 in "historical" will be x percent.
+            * t2  in "real-time" will always be 1 row in the DataFrame or Series
+
+        t0_pct : float, default is 0.65,
+            The time window used to extract the exceedances.
+
+        t1_pct : float, default is 0.25,
+            The time window used to compute the anomaly threshold.
+
+        t2_pct : float, default is 0.10,
+            The time window that consists of the time of interest e.g. today.
+        """
         self.__time_window = set_time_window(
             total_rows=self.__dataset.shape[0],
             method="POT",
@@ -123,6 +142,18 @@ class POTDetector(Detector):
             t1_pct=t1_pct,
             t2_pct=t2_pct,
         )
+
+    @property
+    def t0(self) -> int:
+        return self.__time_window[0]
+
+    @property
+    def t1(self) -> int:
+        return self.__time_window[1]
+
+    @property
+    def t2(self) -> int:
+        return self.__time_window[2]
 
     def get_extremes(self, q: float = 0.90) -> None:
         if isinstance(self.__dataset, pd.DataFrame):
