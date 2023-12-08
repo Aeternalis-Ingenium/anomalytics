@@ -281,8 +281,8 @@ def get_anomaly_threshold(ts: pd.Series, t1: int, q: float = 0.90) -> float:
     ## Example
     ----------
     >>> t0, t1, t2 = set_time_window(1000, "POT", "historical", t0_pct=0.7, t1_pct=0.2, t2_pct=0.1)
-    >>> anomaly_threshold = compute_anomaly_threshold(anomaly_score_ts, t1, 0.90)
-    >>> print(anomaly_threshold)
+    >>> anomaly_threshold = get_anomaly_threshold(anomaly_score_ts, t1, 0.90)
+    >>> anomaly_threshold
     9.167442809714414
 
     ## Raises
@@ -329,7 +329,7 @@ def get_anomaly(ts: pd.Series, t1: int, q: float = 0.90) -> pd.Series:
     ## Example
     ----------
     >>> t0, t1, t2 = set_time_window(1000, "POT", "historical", t0_pct=0.7, t1_pct=0.2, t2_pct=0.1)
-    >>> anomaly_ts = pot_detecto.detect(anomaly_score_ts, t1, 0.90)
+    >>> anomaly_ts = get_anomaly(anomaly_score_ts, t1, 0.90)
     >>> anomaly_ts.head()
     Date-Time
     2019-02-09 08:00:00    False

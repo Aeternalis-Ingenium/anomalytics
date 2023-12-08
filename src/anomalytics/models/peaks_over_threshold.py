@@ -23,6 +23,91 @@ logger = logging.getLogger(__name__)
 
 
 class POTDetector(Detector):
+    """_summary_
+
+    ## Attributes
+    -------------
+    __anomaly_type : __anomaly_type: typing.Literal["high", "low"]
+        The dataset that wants to be analyzed.
+
+    __dataset : typing.Union[pandas.DataFrame, pandas.Series]
+        The dataset that wants to be analyzed.
+
+    __time_window : typing.Tuple[int, int, int]
+        The dataset that wants to be analyzed.
+
+    __exceedance_threshold : typing.Union[pandas.DataFrame, pandas.Series]
+        The dataset that contains threshold for exceedances.
+
+    __exceedance : typing.Union[pandas.DataFrame, pandas.Series]
+        The dataset that contains the exceedances.
+
+    __anomaly_score : typing.Union[pandas.DataFrame, pandas.Series]
+        The dataset that contains the anomaly scores.
+
+    __anomaly_threshold : float
+        The anomaly threshold used to detect anomalies.
+
+    __anomaly : typing.Union[pandas.DataFrame, pandas.Series]
+        The dataset that contains the detected anomalies.
+
+    __eval : pandas.DataFrame
+        The result of "Kolmogorov Smirnov" test presented in a pandas.DataFrame.
+
+    __params
+        The GPD parameters resulted from GPD fitting method.
+
+    ## Methods
+    ----------
+    * __init__(dataset: typing.Union[pd.DataFrame, pd.Series], anomaly_type: typing.Literal["high", "low"] = "high")
+    * reset_time_window(analysis_type: typing.Literal["historical", "real-time"] = "historical", t0_pct: float = 0.65, t1_pct: float = 0.25,t2_pct: float = 0.10)
+    * t1
+    * t2
+    * t3
+    * get_extremes(q: float = 0.90)
+    * fit()
+    * detect(q: float = 0.90)
+    * evaluate(method: typing.Literal["ks", "qq"] = "ks", is_random_param: bool = False)
+    * __get_nonzero_params
+    * params
+    * anomaly_threshold
+    * return_dataset(set_type: typing.Literal["exceedance_threshold", "exceedance", "anomaly", "anomaly_score", "eval"])
+    * plot(plot_type: typing.Literal["l", "l+eth", "l+ath", "hist", "gpd", "gpd+ov"], title: str, xlabel: str, ylabel: str, bins: typing.Optional[int] = 50, plot_width: int = 13, plot_height: int = 8, plot_color: str = "black", th_color: str = "red", th_type: str = "dashed", th_line_width: int = 2, alpha: float = 0.8)
+
+    ## Example
+    ----------
+    >>> import anomalytics as atics
+    >>> ts = atics.read_ts("./my_dataset.csv", "csv")
+    >>> pot_detector = atics.get_detector("POT", ts, "high")
+    >>> print("T0 time window:", pot_detector.t0)
+    >>> print("T1 time window:", pot_detector.t1)
+    >>> print("T2 time window:", pot_detector.t2)
+    ...
+    >>> pot_detector.get_extremes(0.97) # Extract exceedances
+    >>> pot_detector.fit()              # Fit the exceedances into GPD
+    >>> pot_detector.detect(0.97)       # Detect anomalies
+    >>> pot_detector.evaluate("ks")     # Evaluate result with Kolmogorov Smirnov
+    ...
+    >>> exceedance_threshold_ts = pot_detector.return_dataset("exceedance_threshold")
+    >>> exceedance_threshold_ts.head() # Exceedance threshold pandas.Series
+    ...
+    >>> exceedance_ts = pot_detector.return_dataset("exceedance")
+    >>> exceedance_ts.head()# Exceedances pandas.Series
+    ...
+    >>> anomaly_score_ts = pot_detector.return_dataset("anomaly_score")
+    >>> anomaly_score_ts.head() # Anomaly scores pandas.Series
+    ...
+    >>> anomaly_threshold = pot_detector.anomaly_threshold
+    >>> print("Anomaly threshold:", anomaly_score_ts) # float
+    ...
+    >>> anomaly_ts = pot_detector.return_dataset("anomaly")
+    >>> anomaly_ts.head() # Anomalies in pandas.Series
+    ...
+    >>> kst_result_df = pot_detector.return_dataset("eval")
+    >>> kst_result_df.head() # KS parameters in pandas.DataFrame
+    ...
+    """
+
     __slots__ = [
         "__dataset",
         "__time_window",
