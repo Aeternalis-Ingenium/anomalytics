@@ -54,7 +54,7 @@ class POTDetector(Detector):
         Initialize POT model for anomaly detection.
 
         ## Parameters
-        ----------
+        -------------
         dataset : typing.Union[pandas.DataFrame, pandas.Series]
             DataFame or Series objects to be analyzed.
             Index must be date-time and values must be numeric.
@@ -119,19 +119,19 @@ class POTDetector(Detector):
         Set a new time range for `t0`, `t1`, and `t2`.
 
         ## Parameters
-        ----------
+        -------------
         analysis_type : typing.Literal["historical", "real-time"], default is "historical"
             The type of analysis defines the t2 time window.
             * t2 in "historical" will be x percent.
             * t2  in "real-time" will always be 1 row in the DataFrame or Series
 
-        t0_pct : float, default is 0.65,
+        t0_pct : float, default is 0.65
             The time window used to extract the exceedances.
 
-        t1_pct : float, default is 0.25,
+        t1_pct : float, default is 0.25
             The time window used to compute the anomaly threshold.
 
-        t2_pct : float, default is 0.10,
+        t2_pct : float, default is 0.10
             The time window that consists of the time of interest e.g. today.
         """
         self.__time_window = set_time_window(
@@ -156,6 +156,14 @@ class POTDetector(Detector):
         return self.__time_window[2]
 
     def get_extremes(self, q: float = 0.90) -> None:
+        """
+        Extract exceedances from the dataset.
+
+        ## Parameters
+        -------------
+        q : float, default is 0.90
+            The quantile used to calculate the exceedance threshold to extract exceedances.
+        """
         if isinstance(self.__dataset, pd.DataFrame):
             pass
 
@@ -167,6 +175,9 @@ class POTDetector(Detector):
         )
 
     def fit(self) -> None:
+        """
+        Fit the exceedances into GPD and use the parameters to compute the anomaly scores.
+        """
         if isinstance(self.__dataset, pd.DataFrame):
             pass
 
@@ -175,6 +186,14 @@ class POTDetector(Detector):
         )
 
     def detect(self, q: float = 0.90) -> None:
+        """
+        Locate the anomalies within the dataset by comparing the anomaly scores against the anomaly threshold
+
+        ## Parameters
+        -------------
+        q : float, default is 0.90
+            The quantile used to calculate the anomaly threshold to detect the anomalies.
+        """
         if isinstance(self.__dataset, pd.DataFrame):
             pass
 
@@ -182,6 +201,27 @@ class POTDetector(Detector):
         self.__anomaly = get_anomaly(ts=self.__anomaly_score, t1=self.__time_window[1], q=q)
 
     def evaluate(self, method: typing.Literal["ks", "qq"] = "ks", is_random_param: bool = False) -> None:
+        """
+        Evalute the result of the analysis by comparing the exceeance (observed sample) with the GPD parameters (theoretical).
+
+        ## Parameters
+        -------------
+        method : typing.Literal["ks", "qq"], default is "ks"
+            The statistical method used to test the analysis result.
+            * "ks" for Kolmogorov Smirnov test
+            * "qq" for QQ Plot (visual observation)
+
+        is_random_param : bool, default is `False`
+            The parameter for "qq" evaluation to use either random or the last GPD paarameters.
+
+        ## Returns
+        ----------
+        qq_plot : None
+            If `method` is "qq", then the method will return a QQ plot of sample vs. theoretical quantiles.
+
+        kstest_result : None
+            If `method` is "ks", then the method assign a Pandas DataFrame with statistical distance and p-value to `__eval` attribute.
+        """
         params = self.__get_nonzero_params
         if method == "ks":
             self.__eval = pd.DataFrame(data=ks_1sample(ts=self.__exceedance, stats_method="POT", fit_params=params))
@@ -223,18 +263,49 @@ class POTDetector(Detector):
 
     def return_dataset(
         self,
-        set_type: typing.Literal[
-            "exceedance_threshold", "exceedance", "anomaly", "anomaly_threshold", "anomaly_score", "eval"
-        ],
-    ) -> typing.Union[pd.DataFrame, pd.Series, float]:
+        set_type: typing.Literal["exceedance_threshold", "exceedance", "anomaly", "anomaly_score", "eval"],
+    ) -> typing.Union[pd.DataFrame, pd.Series]:
+        """
+        Return a dataset from the chosen process.
+
+        ## Parameters
+        -------------
+        set_type : typing.Literal["exceedance_threshold", "exceedance", "anomaly", "anomaly_score", "eval"]
+            The type of dataset that will be returned.
+
+        ## Returns
+        ----------
+        If set_type is "exceedance_threshold":
+            exceedance_threshold : pandas.Series
+                A Pandas Series that contains the exceedance's threshold stored in `__exceedance_threshold`.
+
+        If set_type is "exceedance":
+            exceedance : pandas.Series
+                A Pandas Series that contains the exceedances stored in `__exceedance`.
+
+        If set_type is "anomaly_score":
+            anomaly_score : pandas.Series
+                A Pandas Series that contains the anomaly scores (inverted p-value)  `__anomaly_score`.
+
+        If set_type is "anomaly":
+            anomaly : pandas.Series
+                A Pandas Series that contains the detected anomaly stored in `__anomaly`.
+
+        If set_type is "eval":
+            exceedance_threshold : pandas.DataFrame
+                A Pandas DataFrame that contains the Kolmogorov Smirnov test result stored in `__eval`.
+
+        ## Raises
+        ---------
+        ValueError
+            Invalid argument for the `set_type` outside these options: "exceedance_threshold", "exceedance", "anomaly", "anomaly_score", "eval".
+        """
         if set_type == "exceedance_threshold":
             dataset = self.__exceedance_threshold
         elif set_type == "exceedance":
             dataset = self.__exceedance
         elif set_type == "anomaly_score":
             dataset = self.__anomaly_score
-        elif set_type == "anomaly_threshold":
-            dataset = self.__anomaly_threshold
         elif set_type == "anomaly":
             dataset = self.__anomaly
         elif set_type == "eval":
