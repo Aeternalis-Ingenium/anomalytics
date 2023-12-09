@@ -33,16 +33,16 @@ class SlackNotification(Notification):
         """
         Formats a single anomaly dictionary into a string for Slack message formatting.
 
-        # Parameters
-        ------------
+        ## Parameters
+        -------------
         data : typing.Dict[str, typing.Union[str, float, int, datetime.datetime]]
             A dictionary containing details of an anomaly.
 
         index : int
             Index of the anomaly in the list, used for numbering in the message.
 
-        # Returns
-        ---------
+        ## Returns
+        ----------
         fmt_data : str
             Formatted string representing the anomaly.
         """
@@ -59,8 +59,8 @@ class SlackNotification(Notification):
         """
         Prepares the Slack message with given data and a custom message.
 
-        # Parameters
-        ------------
+        ## Parameters
+        -------------
         data : typing.List[typing.Dict[str, typing.Union[str, typing.Union[float, int, datetime.datetime]]]]
             A list of dictionaries which represent all the detected anomaly data.
 

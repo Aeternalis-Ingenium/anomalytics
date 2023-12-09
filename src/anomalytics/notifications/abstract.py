@@ -13,8 +13,8 @@ class Notification(metaclass=abc.ABCMeta):
         """
         Prepares the notification with data and a custom message.
 
-        # Parameters
-        ------------
+        ## Parameters
+        -------------
         data : typing.List[typing.Dict[str, typing.Union[str, typing.Union[float, int, datetime.datetime]]]]
             A list of dictionaries which represent all the detected anomaly data.
 
