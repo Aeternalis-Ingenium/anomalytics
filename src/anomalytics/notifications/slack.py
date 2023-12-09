@@ -53,7 +53,7 @@ class SlackNotification(Notification):
 
     def setup(
         self,
-        data: typing.List[typing.Dict[str, typing.Union[str, float, int, datetime.datetime]]],
+        data: typing.List[typing.Dict[str, typing.Union[str, typing.Union[float, int, datetime.datetime]]]],
         message: typing.Optional[str],
     ):
         """
@@ -61,7 +61,7 @@ class SlackNotification(Notification):
 
         # Parameters
         ------------
-        data : typing.List[typing.Dict[str, typing.Union[str, float, int, datetime.datetime]]]
+        data : typing.List[typing.Dict[str, typing.Union[str, typing.Union[float, int, datetime.datetime]]]]
             A list of dictionaries which represent all the detected anomaly data.
 
         message : typing.Optional[str]

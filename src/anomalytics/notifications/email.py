@@ -74,14 +74,16 @@ class EmailNotification(Notification):
         return f"{index + 1}. Date: {date} | Column: {column} | Anomaly: {anomaly}"
 
     def setup(
-        self, data: typing.List[typing.Dict[str, typing.Union[str, float, int, datetime.datetime]]], message: str
+        self,
+        data: typing.List[typing.Dict[str, typing.Union[str, typing.Union[float, int, datetime.datetime]]]],
+        message: str,
     ):
         """
         Prepares the email message with given data and a custom message.
 
         ## Parameters
         -------------
-        data : typing.List[typing.Dict[str, typing.Union[str, float, int, datetime.datetime]]]
+        data : typing.List[typing.Dict[str, typing.Union[str, typing.Union[float, int, datetime.datetime]]]]
             A list of dictionaries which represent all the detected anomaly data.
 
         message : str
