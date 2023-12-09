@@ -139,7 +139,7 @@ $ pip3 install "anomalytics[extra]"
     'p_value': 0.0,
     'anomaly_score': 0.0},
     1: {'datetime': Timestamp('2016-10-29 04:00:00'),
-    ...
+    'c': 0.324456778899,
     'loc': 0,
     'scale': 0.19125308567629334,
     'p_value': 0.19286132173263668,
@@ -277,7 +277,7 @@ $ pip3 install "anomalytics[extra]"
     'p_value': 0.0,
     'anomaly_score': 0.0},
     1: {'datetime': Timestamp('2016-10-29 04:00:00'),
-    ...
+    'c': 0.324456778899,
     'loc': 0,
     'scale': 0.19125308567629334,
     'p_value': 0.19286132173263668,
