@@ -53,6 +53,19 @@ class Detector(metaclass=abc.ABCMeta):
 
     @property
     @abc.abstractmethod
+    def return_detected_anomalies(self) -> typing.Union[pd.DataFrame, pd.Series]:
+        """
+        Retrieve all detected anomalies.
+
+        ## Returns
+        ----------
+        detected_anomalies : typing.Union[pd.DataFrame, pd.Series]
+            All detected anomalies.
+        """
+        ...
+
+    @property
+    @abc.abstractmethod
     def params(self) -> typing.Dict:
         """
         Retrieve the parameters of the anomaly detection model.

@@ -48,6 +48,10 @@ class ZScoreDetector(Detector):
         raise NotImplementedError("Not yet implemented!")
 
     @property
+    def return_detected_anomalies(self) -> typing.Union[pd.DataFrame, pd.Series]:
+        raise NotImplementedError("Not yet implemented!")
+
+    @property
     def params(self) -> dict:  # type: ignore
         raise NotImplementedError("Not yet implemented!")
 

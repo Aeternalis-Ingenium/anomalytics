@@ -445,6 +445,14 @@ class POTDetector(Detector):
             )
         return dataset
 
+    @property
+    def return_detected_anomalies(self) -> typing.Union[pd.DataFrame, pd.Series]:
+        if isinstance(self.__dataset, pd.DataFrame):
+            pass
+
+        detected_anomalies = self.__anomaly[self.__anomaly.values == True]
+        return self.__dataset[detected_anomalies.index]
+
     def plot(
         self,
         plot_type: typing.Literal["l", "l+eth", "l+ath", "hist", "gpd", "gpd+ov"],
