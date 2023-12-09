@@ -4,7 +4,7 @@ from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 from smtplib import SMTP
 
-from anomalytics.notifications.notification import Notification
+from anomalytics.notifications.abstract import Notification
 
 
 class EmailNotification(Notification):
@@ -55,16 +55,16 @@ class EmailNotification(Notification):
         """
         Formats a single anomaly dictionary into a string for Slack message formatting.
 
-        # Parameters
-        ------------
+        ## Parameters
+        -------------
         data : typing.Dict[str, typing.Union[str, float, int, datetime.datetime]]
             A dictionary containing details of an anomaly.
 
         index : int
             Index of the anomaly in the list, used for numbering in the message.
 
-        # Returns
-        ---------
+        ## Returns
+        ----------
         fmt_data : str
             Formatted string representing the anomaly.
         """
@@ -79,8 +79,8 @@ class EmailNotification(Notification):
         """
         Prepares the email message with given data and a custom message.
 
-        # Parameters
-        ------------
+        ## Parameters
+        -------------
         data : typing.List[typing.Dict[str, typing.Union[str, float, int, datetime.datetime]]]
             A list of dictionaries which represent all the detected anomaly data.
 

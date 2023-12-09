@@ -1,10 +1,10 @@
 import datetime
-import http
 import json
 import typing
+from http import client
 from urllib.parse import urlparse
 
-from anomalytics.notifications.notification import Notification
+from anomalytics.notifications.abstract import Notification
 
 
 class SlackNotification(Notification):
@@ -97,7 +97,7 @@ class SlackNotification(Notification):
             raise ValueError("Payload not set. Please call `setup()` method first.")
 
         parsed_url = urlparse(url=self.webhook_url)
-        connection = http.client.HTTPSConnection(parsed_url.netloc)  # type: ignore
+        connection = client.HTTPSConnection(parsed_url.netloc)  # type: ignore
 
         connection.request(method="POST", url=parsed_url.path, body=self.__payload, headers=self.__headers)
         response = connection.getresponse()
