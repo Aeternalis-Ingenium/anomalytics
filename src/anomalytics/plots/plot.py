@@ -25,9 +25,9 @@ def plot_line(
     plt.plot(dataset.index, dataset.values, color=plot_color, alpha=alpha, label=f"{dataset.shape[0]} Data Points")
 
     if is_threshold:
-        if type(threshold) == float:
+        if not isinstance(threshold, pd.Series):
             plt.axhline(threshold, c=th_color, ls=th_type, lw=th_line_width, label=f"{threshold} Anomaly Threshold")
-        elif isinstance(threshold, pd.Series):
+        else:
             plt.plot(
                 dataset.index,
                 threshold.values,
