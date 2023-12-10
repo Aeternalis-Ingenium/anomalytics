@@ -1,8 +1,9 @@
-import datetime
 import json
 import typing
 from http import client
 from urllib.parse import urlparse
+
+import pandas as pd
 
 from anomalytics.notifications.abstract import Notification
 
@@ -29,63 +30,32 @@ class SlackNotification(Notification):
         self.__payload: str = ""
         self.__subject: str = "🤖 Detecto: Anomaly detected!"
 
-    def __format_data(self, data: typing.Dict[str, typing.Union[str, float, int, datetime.datetime]], index: int):
-        """
-        Formats a single anomaly dictionary into a string for Slack message formatting.
-
-        ## Parameters
-        -------------
-        data : typing.Dict[str, typing.Union[str, float, int, datetime.datetime]]
-            A dictionary containing details of an anomaly.
-
-        index : int
-            Index of the anomaly in the list, used for numbering in the message.
-
-        ## Returns
-        ----------
-        fmt_data : str
-            Formatted string representing the anomaly.
-        """
-        date = data["date"]
-        column = data["column"]
-        anomaly = data["anomaly"]
-        return f"{index + 1}. Date: {date} | Column: {column} | Anomaly: {anomaly}"
-
     def setup(
         self,
-        data: typing.List[typing.Dict[str, typing.Union[str, typing.Union[float, int, datetime.datetime]]]],
-        message: typing.Optional[str],
+        detection_summary: pd.DataFrame,
+        message: str,
     ):
         """
-        Prepares the Slack message with given data and a custom message.
+        Prepares the email message with given data and a custom message.
 
         ## Parameters
         -------------
-        data : typing.List[typing.Dict[str, typing.Union[str, typing.Union[float, int, datetime.datetime]]]]
-            A list of dictionaries which represent all the detected anomaly data.
+        detection_summary : pandas.DataFrame
+            A DataFrame with summarized detection result.
 
-        message : typing.Optional[str]
+        message : str
             A custom message to be included in the notification.
         """
-        if not isinstance(data, list):
-            raise TypeError("Data argument must be of type list")
-        else:
-            for element in data:
-                if not isinstance(element, dict):
-                    raise TypeError("Data argument must be of type dict")
-                else:
-                    for key in element.keys():
-                        if key not in ["date", "column", "anomaly"]:
-                            raise KeyError("Key needs to be one of these: date, column, anomaly")
+        if not isinstance(detection_summary, pd.DataFrame):
+            raise TypeError("Invalid type! `detection_summary` must be Pandas DataFrame")
 
-        fmt_data = "\n".join(
-            self.__format_data(data=anomaly_data, index=index) for index, anomaly_data in enumerate(data)
-        )
+        most_recent_data = detection_summary.iloc[[-1]]
+        anomaly_report = f"Row: {most_recent_data.row.values[0]} | Date: {most_recent_data.datetime.values[0]} | Anomalous Data: {most_recent_data.anomalous_data.values[0]} | Anomaly Score: {most_recent_data.anomaly_score.values[0]} | Anomaly Threshold: {most_recent_data.anomaly_threshold.values[0]}"
 
         if not message:
-            fmt_message = f"{self.__subject}\n" f"\n\n{fmt_data}"
+            fmt_message = f"{self.__subject}\n\n{anomaly_report}"
         else:
-            fmt_message = f"{self.__subject}\n" f"\n\n{message}\n" f"\n\n{fmt_data}"
+            fmt_message = f"{self.__subject}\n\n{message}\n\n{anomaly_report}"
         self.__payload = json.dumps({"text": fmt_message})
 
     @property
