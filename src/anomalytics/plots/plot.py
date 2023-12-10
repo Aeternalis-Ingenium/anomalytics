@@ -8,7 +8,7 @@ import scipy.stats as stats
 
 def plot_line(
     dataset: typing.Union[pd.DataFrame, pd.Series],
-    threshold: typing.Union[pd.Series, float, None],
+    threshold: typing.Optional[typing.Union[pd.Series, float, np.float64, np.number]],
     title: str,
     xlabel: str,
     ylabel: str,
@@ -25,7 +25,7 @@ def plot_line(
     plt.plot(dataset.index, dataset.values, color=plot_color, alpha=alpha, label=f"{dataset.shape[0]} Data Points")
 
     if is_threshold:
-        if not isinstance(threshold, pd.Series):
+        if not isinstance(threshold, pd.Series) and (isinstance(threshold) == float or isinstance(threshold) == np.float64 or isinstance(threshold) == np.number):
             plt.axhline(threshold, c=th_color, ls=th_type, lw=th_line_width, label=f"{threshold} Anomaly Threshold")
         else:
             plt.plot(
