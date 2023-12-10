@@ -50,7 +50,7 @@ class EmailNotification(Notification):
         self.smtp_host = smtp_host
         self.smtp_port = smtp_port
         self.recipient_addresses = recipient_addresses
-        self.__subject = "🤖 Detecto: Anomaly detected!"
+        self.__subject = "🤖 Anomalytics - Anomaly Detected!"
         self.__payload: str = ""
 
     def setup(

@@ -22,7 +22,7 @@ class TestSlackNotification(unittest.TestCase):
         self.assertEqual(first=self.slack_notification._SlackNotification__payload, second="")  # type: ignore
         self.assertEqual(first=type(self.slack_notification._SlackNotification__subject), second=str)  # type: ignore
         self.assertEqual(
-            first=self.slack_notification._SlackNotification__subject, second="🤖 Detecto: Anomaly detected!"  # type: ignore
+            first=self.slack_notification._SlackNotification__subject, second="🤖 Anomalytics - Anomaly Detected!"  # type: ignore
         )
 
     def test_string_method(self):
@@ -35,7 +35,7 @@ class TestSlackNotification(unittest.TestCase):
     def test_setup_with_message(self):
         expected_payload = dumps(
             {
-                "text": "🤖 Detecto: Anomaly detected!"
+                "text": "🤖 Anomalytics - Anomaly Detected!"
                 "\n\nTest notification message"
                 "\n\nRow: 9 | Date: 2023-01-10 | Anomalous Data: 75521 | Anomaly Score: 8.123 | Anomaly Threshold: 7.3"
             }
@@ -49,7 +49,7 @@ class TestSlackNotification(unittest.TestCase):
     def test_setup_without_message(self):
         expected_payload = dumps(
             {
-                "text": "🤖 Detecto: Anomaly detected!"
+                "text": "🤖 Anomalytics - Anomaly Detected!"
                 "\n\nRow: 9 | Date: 2023-01-10 | Anomalous Data: 75521 | Anomaly Score: 8.123 | Anomaly Threshold: 7.3"
             }
         )

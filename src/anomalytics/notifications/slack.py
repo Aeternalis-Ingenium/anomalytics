@@ -28,7 +28,7 @@ class SlackNotification(Notification):
         self.webhook_url = webhook_url
         self.__headers: typing.Dict[str, str] = {"Content-Type": "application/json"}
         self.__payload: str = ""
-        self.__subject: str = "🤖 Detecto: Anomaly detected!"
+        self.__subject: str = "🤖 Anomalytics - Anomaly Detected!"
 
     def setup(
         self,

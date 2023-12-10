@@ -28,13 +28,14 @@ class TestEmailNotification(unittest.TestCase):
         self.test_message = "Test notification message"
 
     def test_instance_is_abstract_class(self):
+        expected_subject = "🤖 Anomalytics - Anomaly Detected!"
         self.assertIsInstance(obj=self.gmail_notification, cls=Notification)
         self.assertEqual(first=type(self.gmail_notification._EmailNotification__payload), second=str)  # type: ignore
         self.assertEqual(first=len(self.gmail_notification._EmailNotification__payload), second=0)  # type: ignore
         self.assertEqual(first=self.gmail_notification._EmailNotification__payload, second="")  # type: ignore
         self.assertEqual(first=type(self.gmail_notification._EmailNotification__subject), second=str)  # type: ignore
         self.assertEqual(
-            first=self.gmail_notification._EmailNotification__subject, second="🤖 Detecto: Anomaly detected!"  # type: ignore
+            first=self.gmail_notification._EmailNotification__subject, second=expected_subject  # type: ignore
         )
 
         self.assertIsInstance(obj=self.webde_notification, cls=Notification)
@@ -43,7 +44,7 @@ class TestEmailNotification(unittest.TestCase):
         self.assertEqual(first=self.webde_notification._EmailNotification__payload, second="")  # type: ignore
         self.assertEqual(first=type(self.webde_notification._EmailNotification__subject), second=str)  # type: ignore
         self.assertEqual(
-            first=self.webde_notification._EmailNotification__subject, second="🤖 Detecto: Anomaly detected!"  # type: ignore
+            first=self.webde_notification._EmailNotification__subject, second=expected_subject  # type: ignore
         )
 
     def test_string_method(self):
