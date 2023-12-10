@@ -1,4 +1,4 @@
-from unittest import TestCase
+import unittest
 
 import pandas as pd
 import pytest
@@ -8,7 +8,7 @@ from anomalytics.models.peaks_over_threshold import POTDetector
 
 
 @pytest.mark.usefixtures("get_sample_1_ts", "get_sample_2_ts")
-class TestPOTDetector(TestCase):
+class TestPOTDetector(unittest.TestCase):
     def setUp(self) -> None:
         super().setUp()
         self.pot1_detector = atics.get_detector(method="POT", dataset=self.sample_1_ts)  # type: ignore
@@ -50,10 +50,8 @@ class TestPOTDetector(TestCase):
             name="exceedances",
         )
 
-        pd.testing.assert_series_equal(
-            self.pot1_detector.return_dataset(set_type="exceedance_threshold"), expected_exceedance_threshold
-        )
-        pd.testing.assert_series_equal(self.pot1_detector.return_dataset(set_type="exceedance"), expected_exceedance)
+        pd.testing.assert_series_equal(self.pot1_detector.exceedance_thresholds, expected_exceedance_threshold)
+        pd.testing.assert_series_equal(self.pot1_detector.exceedances, expected_exceedance)
 
     def test_fit_with_genpareto_method(self):
         self.pot1_detector.get_extremes(q=0.90)
@@ -79,15 +77,15 @@ class TestPOTDetector(TestCase):
         self.assertEqual(self.pot1_detector._POTDetector__params[0], expected_params[0])
 
     def test_compute_anomaly_threshold_method(self):
-        expected_anomalies = [True]
+        expected_detected_data = [True]
         expected_anomaly_threshold = 1.2394417670604552
 
         self.pot2_detector.get_extremes(q=0.90)
         self.pot2_detector.fit()
         self.pot2_detector.detect(q=0.90)
 
-        self.assertEqual(self.pot2_detector._POTDetector__anomaly_threshold, expected_anomaly_threshold)
-        self.assertEqual(self.pot2_detector._POTDetector__anomaly.iloc[0], expected_anomalies)
+        self.assertEqual(self.pot2_detector.anomaly_threshold, expected_anomaly_threshold)
+        self.assertEqual(self.pot2_detector.detection_result.iloc[0], expected_detected_data)
 
     def test_evaluation_with_ks_1sample(self):
         self.pot2_detector.get_extremes(q=0.90)

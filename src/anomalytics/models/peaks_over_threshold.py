@@ -254,6 +254,162 @@ class POTDetector(Detector):
         """
         return self.__time_window[2]
 
+    @property
+    def params(self) -> typing.Dict:
+        """
+        The generalized pareto distributions parameters.
+
+        ## Returns
+        ----------
+        params : typing.Dict
+            The GPD parameters.
+        """
+        return self.__params
+
+    @property
+    def exceedance_thresholds(self) -> typing.Union[pd.DataFrame, pd.Series]:
+        """
+        Return the dataset with the exceedance thresholds.
+
+        ## Returns
+        ----------
+        exceedance_thresholds : typing.Union[pd.DataFrame, pd.Series]
+            A Pandas DataFrame or Series that contains the thresholds for extracting the exceedances.
+
+        ## Raises
+        ---------
+        TypeError
+            The attribute `__exceedance_threshold` is neither a Pandas DataFrame, nor a Pandas Series.
+        """
+        if not isinstance(self.__exceedance_threshold, pd.DataFrame) and not isinstance(
+            self.__exceedance_threshold, pd.Series
+        ):
+            raise TypeError(
+                "Invalid type! `__exceedance_threshold` attribute is still None. Try calling `get_extremes()`"
+            )
+        return self.__exceedance_threshold
+
+    @property
+    def exceedances(self) -> typing.Union[pd.DataFrame, pd.Series]:
+        """
+        Return the dataset with the exceedances.
+
+        ## Returns
+        ----------
+        exceedances: typing.Union[pd.DataFrame, pd.Series]
+            A Pandas DataFrame or Series that contains exceedances.
+
+        ## Raises
+        ---------
+        TypeError
+            The attribute `__exceedance` is neither a Pandas DataFrame, nor a Pandas Series.
+        """
+        if not isinstance(self.__exceedance, pd.DataFrame) and not isinstance(self.__exceedance, pd.Series):
+            raise TypeError("Invalid type! `__exceedance` attribute is still None. Try calling `get_extremes()`")
+        return self.__exceedance
+
+    @property
+    def anomaly_threshold(self) -> float:
+        """
+        The anomaly threshold computed by the quantile method in `detect()`.
+
+        ## Returns
+        ----------
+        anomaly_threshold : float
+            The anomaly threshold.
+
+        ## Raises
+        ---------
+        TypeError
+            The attribute `__anomaly_threshold` is stil None.
+        """
+        if not isinstance(self.__anomaly_threshold, float):
+            raise TypeError("Invalid value! `__anomaly_threshold` attribute is still None. Try calling `detect()`")
+        return self.__anomaly_threshold
+
+    @property
+    def fit_result(self) -> typing.Union[pd.DataFrame, pd.Series]:
+        """
+        Return the dataset with all the anomaly scores.
+
+        ## Returns
+        ----------
+        anomaly_scores : typing.Union[pd.DataFrame, pd.Series]
+            A Pandas DataFrame or Series that contains the anomlay scores.
+
+        ## Raises
+        ---------
+        TypeError
+            The attribute `__anomaly_score` is neither a Pandas DataFrame, nor a Pandas Series.
+        """
+        if not isinstance(self.__anomaly_score, pd.DataFrame) and not isinstance(self.__anomaly_score, pd.Series):
+            raise TypeError("Invalid type! `__anomaly_score` attribute is still None. Try calling `fit()`")
+        return self.__anomaly_score
+
+    @property
+    def detection_result(self) -> typing.Union[pd.DataFrame, pd.Series]:
+        """
+        Return the dataset with all detected detected.
+
+        ## Returns
+        ----------
+        detected_data : typing.Union[pd.DataFrame, pd.Series]
+            A Pandas DataFrame or Series that contains boolean result of whether the data is anomalous or not.
+
+        ## Raises
+        ---------
+        TypeError
+            The attribute `__detection` is neither a Pandas DataFrame, nor a Pandas Series.
+        """
+        if not isinstance(self.__detection, pd.DataFrame) and not isinstance(self.__detection, pd.Series):
+            raise TypeError("Invalid type! `__detection` attribute is still None. Try calling `detect()`")
+        return self.__detection
+
+    @property
+    def detected_anomalies(self) -> typing.Union[pd.DataFrame, pd.Series]:
+        """
+        Return the dataset with all detected anomalies.
+
+        ## Returns
+        ----------
+        detected_anomalies : typing.Union[pd.DataFrame, pd.Series]
+            A Pandas DataFrame or Series that contains all the detected anomalies.
+
+        ## Raises
+        ---------
+        TypeError
+            The attribute `__dataset` is neither a Pandas DataFrame, nor a Pandas Series.
+        """
+        if isinstance(self.__dataset, pd.DataFrame):
+            pass
+
+        elif isinstance(self.__dataset, pd.Series):
+            try:
+                detected_anomalies = self.__detection[self.__detection.values == True]
+            except TypeError:
+                raise TypeError("Invalid type! The `__detection` attribute is still None. Try calling `detect()`")
+            return self.__dataset[detected_anomalies.index]
+        raise TypeError("Invalid type! The `__dataset` attribute is neither a Pandas DataFrame, nor a Pandas Series")
+
+    @property
+    def evaluation_result(self) -> pd.DataFrame:
+        """
+        Return the evaluation result.
+
+        ## Returns
+        ----------
+        evaluation_result : pandas.DataFrame
+            A Pandas DataFrame that contains the Kolmogorov Smirnov test result stored in `__eval`.
+
+        ## Raises
+        ---------
+        TypeError
+            The attribute `__eval` is still None because `evaluate()` has not been called.
+        """
+        if isinstance(self.__eval, pd.DataFrame):
+            return self.__eval
+        raise TypeError("Invalid type! `__eval` attribute is still None. Try calling `evaluate()`")
+
     def get_extremes(self, q: float = 0.90) -> None:
         """
         Extract exceedances from the dataset.
@@ -355,120 +511,6 @@ class POTDetector(Detector):
             ):
                 nonzero_params.append(self.params[row])
         return nonzero_params
-
-    @property
-    def params(self) -> typing.Dict:
-        """
-        The generalized pareto distributions parameters.
-
-        ## Returns
-        ----------
-        params : typing.Dict
-            The GPD parameters.
-        """
-        return self.__params
-
-    @property
-    def anomaly_threshold(self) -> float:
-        """
-        The anomaly threshold computed by the quantile method in `detect()`.
-
-        ## Returns
-        ----------
-        anomaly_threshold : float
-            The anomaly threshold.
-
-        ## Raises
-        ---------
-        TypeError
-            The attribute `__anomaly_threshold` is stil None.
-        """
-        if not isinstance(self.__anomaly_threshold, float):
-            raise TypeError("Invalid value! `__anomaly_threshold` attribute is still None. Try calling `detect()`")
-        return self.__anomaly_threshold
-
-    @property
-    def fit_result(self) -> typing.Union[pd.DataFrame, pd.Series]:
-        """
-        Return the dataset with all the anomaly scores.
-
-        ## Returns
-        ----------
-        anomaly_scores : typing.Union[pd.DataFrame, pd.Series]
-            A Pandas DataFrame or Series that contains the anomlay scores.
-
-        ## Raises
-        ---------
-        TypeError
-            The attribute `__anomaly_score` is neither a Pandas DataFrame, nor a Pandas Series.
-        """
-        if not isinstance(self.__anomaly_score, pd.DataFrame) and not isinstance(self.__anomaly_score, pd.Series):
-            raise TypeError("Invalid type! `__anomaly_score` attribute is still None. Try calling `fit()`")
-        return self.__anomaly_score
-
-    @property
-    def detection_result(self) -> typing.Union[pd.DataFrame, pd.Series]:
-        """
-        Return the dataset with all detected detected.
-
-        ## Returns
-        ----------
-        detected_data : typing.Union[pd.DataFrame, pd.Series]
-            A Pandas DataFrame or Series that contains boolean result of whether the data is anomalous or not.
-
-        ## Raises
-        ---------
-        TypeError
-            The attribute `__detection` is neither a Pandas DataFrame, nor a Pandas Series.
-        """
-        if not isinstance(self.__detection, pd.DataFrame) and not isinstance(self.__detection, pd.Series):
-            raise TypeError("Invalid type! `__detection` attribute is still None. Try calling `detect()`")
-        raise self.__detection
-
-    @property
-    def detected_anomalies(self) -> typing.Union[pd.DataFrame, pd.Series]:
-        """
-        Return the dataset with all detected anomalies.
-
-        ## Returns
-        ----------
-        detected_anomalies : typing.Union[pd.DataFrame, pd.Series]
-            A Pandas DataFrame or Series that contains all the detected anomalies.
-
-        ## Raises
-        ---------
-        TypeError
-            The attribute `__dataset` is neither a Pandas DataFrame, nor a Pandas Series.
-        """
-        if isinstance(self.__dataset, pd.DataFrame):
-            pass
-
-        elif isinstance(self.__dataset, pd.Series):
-            try:
-                detected_anomalies = self.__detection[self.__detection.values == True]
-            except TypeError:
-                raise TypeError("Invalid type! The `__detection` attribute is still None. Try calling `detect()`")
-            return self.__dataset[detected_anomalies.index]
-        raise TypeError("Invalid type! The `__dataset` attribute is neither a Pandas DataFrame, nor a Pandas Series")
-
-    @property
-    def evaluation_result(self) -> pd.DataFrame:
-        """
-        Return the evaluation result.
-
-        ## Returns
-        ----------
-        evaluation_result : pandas.DataFrame
-            A Pandas DataFrame that contains the Kolmogorov Smirnov test result stored in `__eval`.
-
-        ## Raises
-        ---------
-        TypeError
-            The attribute `__eval` is still None because `evaluate()` has not been called.
-        """
-        if isinstance(self.__eval, pd.DataFrame):
-            return self.__eval
-        raise TypeError("Invalid type! `__eval` attribute is still None. Try calling `evaluate()`")
 
     @property
     def detection_summary(self) -> pd.DataFrame:

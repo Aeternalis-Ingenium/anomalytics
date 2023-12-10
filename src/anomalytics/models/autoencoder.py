@@ -121,7 +121,7 @@ class AutoencoderDetector(Detector):
         """
         if not isinstance(self.__detection, pd.DataFrame) and not isinstance(self.__detection, pd.Series):
             raise ValueError("Invalid value! `__detection` attribute is still None. Try calling `detect()`")
-        raise self.__detection
+        return self.__detection
 
     @property
     def detected_anomalies(self) -> typing.Union[pd.DataFrame, pd.Series]:

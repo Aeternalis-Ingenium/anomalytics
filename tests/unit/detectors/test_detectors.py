@@ -1,4 +1,4 @@
-from unittest import TestCase
+import unittest
 
 import pytest
 
@@ -15,7 +15,7 @@ from anomalytics.models.zscore import ZScoreDetector
 
 
 @pytest.mark.usefixtures("get_sample_1_ts")
-class TestDetector(TestCase):
+class TestDetector(unittest.TestCase):
     def setUp(self) -> None:
         super().setUp()
         self.ae_detector = atics.get_detector(method="AE", dataset=self.sample_1_ts)  # type: ignore

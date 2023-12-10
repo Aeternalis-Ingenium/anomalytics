@@ -1,10 +1,10 @@
-from unittest import TestCase
+import unittest
 
 from anomalytics import set_time_window
 from anomalytics.time_windows import compute_pot_windows
 
 
-class TestTimeWindow(TestCase):
+class TestTimeWindow(unittest.TestCase):
     def setUp(self) -> None:
         super().setUp()
         self.ht0, self.ht1, self.ht2 = set_time_window(

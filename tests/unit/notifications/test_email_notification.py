@@ -1,11 +1,14 @@
-from unittest import TestCase
+import unittest
 from unittest.mock import MagicMock, patch
+
+import pytest
 
 from anomalytics.notifications.abstract import Notification
 from anomalytics.notifications.email import EmailNotification
 
 
-class TestEmailNotification(TestCase):
+@pytest.mark.usefixtures("get_sample_1_detection_summary")
+class TestEmailNotification(unittest.TestCase):
     def setUp(self) -> None:
         super().setUp()
         self.gmail_notification = EmailNotification(
@@ -23,10 +26,6 @@ class TestEmailNotification(TestCase):
             smtp_port=587,
         )
         self.test_message = "Test notification message"
-        self.test_data = [
-            {"date": "2023-10-23T00:00:00.000Z", "column": "col_1", "anomaly": 2003.214},
-            {"date": "2023-10-23T00:00:00.000Z", "column": "col_2", "anomaly": 1055.67},
-        ]
 
     def test_instance_is_abstract_class(self):
         self.assertIsInstance(obj=self.gmail_notification, cls=Notification)
@@ -53,54 +52,32 @@ class TestEmailNotification(TestCase):
 
     def test_setup_with_wrong_data_type(self):
         with self.assertRaises(expected_exception=TypeError):
-            self.gmail_notification.setup(data=self.test_data[0], message=self.test_message)  # type: ignore
+            self.gmail_notification.setup(data=self.sample_1_detection_summary.values, message=self.test_message)  # type: ignore
 
         with self.assertRaises(expected_exception=TypeError):
-            self.webde_notification.setup(data=self.test_data[0], message=self.test_message)  # type: ignore
+            self.webde_notification.setup(data=self.sample_1_detection_summary.values, message=self.test_message)  # type: ignore
 
-    def test_setup_with_wrong_data_type_first_nested(self):
-        with self.assertRaises(expected_exception=TypeError):
-            self.gmail_notification.setup(
-                data=[("date", "2023-10-23T00:00:00.000Z"), ("column", "col_1"), ("anomaly", 2003.214)],  # type: ignore
-                message=self.test_message,
-            )
-
-        with self.assertRaises(expected_exception=TypeError):
-            self.webde_notification.setup(
-                data=[("date", "2023-10-23T00:00:00.000Z"), ("column", "col_1"), ("anomaly", 2003.214)],  # type: ignore
-                message=self.test_message,
-            )
-
-    def test_setup_with_wrong_key_name(self):
-        with self.assertRaises(expected_exception=KeyError):
-            self.gmail_notification.setup(  # type: ignore
-                data=[{"date": "2023-10-23T00:00:00.000Z", "col": "col_1", "anomaly_value": 1055.67}],  # type: ignore
-                message=self.test_message,
-            )
-
-        with self.assertRaises(expected_exception=KeyError):
-            self.webde_notification.setup(  # type: ignore
-                data=[{"date": "2023-10-23T00:00:00.000Z", "col": "col_1", "anomaly_value": 1055.67}],  # type: ignore
-                message=self.test_message,
-            )
-
-    def test_format_data_method(self):
-        expected_fmt_data = "1. Date: 2023-10-23T00:00:00.000Z | Column: col_1 | Anomaly: 2003.214"
-        fmt_gmail_data = self.gmail_notification._EmailNotification__format_data(data=self.test_data[0], index=0)  # type: ignore
-        fmt_webde_data = self.gmail_notification._EmailNotification__format_data(data=self.test_data[0], index=0)  # type: ignore
-
-        self.assertEqual(first=fmt_gmail_data, second=expected_fmt_data)
-        self.assertEqual(first=fmt_webde_data, second=expected_fmt_data)
-
-    def test_setup(self):
+    def test_setup_with_message(self):
         expected_payload = (
-            f"{self.test_message}\n\n"  # Note the double \n here for the gap between message and first anomaly
-            "1. Date: 2023-10-23T00:00:00.000Z | Column: col_1 | Anomaly: 2003.214\n"  # \n at the end of this line
-            "2. Date: 2023-10-23T00:00:00.000Z | Column: col_2 | Anomaly: 1055.67"
+            "Test notification message"
+            "\n\nRow: 9 | Date: 2023-01-10 | Anomalous Data: 75521 | Anomaly Score: 8.123 | Anomaly Threshold: 7.3"
         )
 
-        self.gmail_notification.setup(data=self.test_data, message=self.test_message)  # type: ignore
-        self.webde_notification.setup(data=self.test_data, message=self.test_message)  # type: ignore
+        self.gmail_notification.setup(detection_summary=self.sample_1_detection_summary, message=self.test_message)  # type: ignore
+        self.webde_notification.setup(detection_summary=self.sample_1_detection_summary, message=self.test_message)  # type: ignore
+
+        self.assertNotEqual(first=self.gmail_notification._EmailNotification__payload, second="")  # type: ignore
+        self.assertNotEqual(first=self.webde_notification._EmailNotification__payload, second="")  # type: ignore
+        self.assertEqual(first=self.gmail_notification._EmailNotification__payload, second=expected_payload)  # type: ignore
+        self.assertEqual(first=self.webde_notification._EmailNotification__payload, second=expected_payload)  # type: ignore
+
+    def test_setup_without_message(self):
+        expected_payload = (
+            "Row: 9 | Date: 2023-01-10 | Anomalous Data: 75521 | Anomaly Score: 8.123 | Anomaly Threshold: 7.3"
+        )
+
+        self.gmail_notification.setup(detection_summary=self.sample_1_detection_summary, message=None)  # type: ignore
+        self.webde_notification.setup(detection_summary=self.sample_1_detection_summary, message=None)  # type: ignore
 
         self.assertNotEqual(first=self.gmail_notification._EmailNotification__payload, second="")  # type: ignore
         self.assertNotEqual(first=self.webde_notification._EmailNotification__payload, second="")  # type: ignore
@@ -111,7 +88,7 @@ class TestEmailNotification(TestCase):
     def test_send_gmail(self, mock_smtp):
         mock_smtp.return_value = MagicMock()
 
-        self.gmail_notification.setup(data=self.test_data, message=self.test_message)  # type: ignore
+        self.gmail_notification.setup(detection_summary=self.sample_1_detection_summary, message=self.test_message)  # type: ignore
         self.gmail_notification.send
 
         mock_smtp.assert_called_with(host="smtp.gmail.com", port=587)
@@ -123,7 +100,7 @@ class TestEmailNotification(TestCase):
     def test_send_webde(self, mock_smtp):
         mock_smtp.return_value = MagicMock()
 
-        self.webde_notification.setup(data=self.test_data, message=self.test_message)  # type: ignore
+        self.webde_notification.setup(detection_summary=self.sample_1_detection_summary, message=self.test_message)  # type: ignore
         self.webde_notification.send
 
         mock_smtp.assert_called_with(host="smtp.web.de", port=587)

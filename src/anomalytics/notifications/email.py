@@ -78,7 +78,7 @@ class EmailNotification(Notification):
         if not message:
             self.__payload = anomaly_report
         else:
-            self.__payload = f"{message}\n" f"\n\n{anomaly_report}"
+            self.__payload = f"{message}" f"\n\n{anomaly_report}"
 
     @property
     def send(self):

@@ -1,4 +1,4 @@
-from unittest import TestCase
+import unittest
 
 from anomalytics import get_notification
 from anomalytics.notifications.abstract import Notification
@@ -6,7 +6,7 @@ from anomalytics.notifications.email import EmailNotification
 from anomalytics.notifications.slack import SlackNotification
 
 
-class TestFactoryNotification(TestCase):
+class TestFactoryNotification(unittest.TestCase):
     def setUp(self) -> None:
         return super().setUp()
 
