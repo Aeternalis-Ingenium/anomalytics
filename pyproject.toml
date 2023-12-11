@@ -6,7 +6,7 @@ build-backend = "setuptools.build_meta"
 name = "anomalytics"
 description = "The ultimate anomaly detection library."
 readme = "README.md"
-version = "0.1.5"
+version = "0.1.6"
 license = {file = "LICENSE"}
 requires-python = ">=3.10"
 authors = [
@@ -47,6 +47,7 @@ dependencies = [
 
 [project.urls]
 repository = "https://github.com/Aeternalis-Ingenium/anomalytics"
+documentation = "https://github.com/Aeternalis-Ingenium/anomalytics/blob/trunk/README.md"
 
 [project.optional-dependencies]
 codequality = [
