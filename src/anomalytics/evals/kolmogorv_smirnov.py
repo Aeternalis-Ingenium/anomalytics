@@ -78,7 +78,7 @@ def ks_1sample(
         loc = fit_params[-1]["loc"]
         scale = fit_params[-1]["scale"]
         ks_result = stats.ks_1samp(
-            x=ts.values,
+            x=ts[ts.values > 0],
             cdf=stats.genpareto.cdf,
             args=(c, loc, scale),
             alternative="two-sided",
