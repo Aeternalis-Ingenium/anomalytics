@@ -79,7 +79,7 @@ def plot_gen_pareto(
     plot_height: int = 8,
     plot_color: str = "black",
     alpha: float = 0.8,
-    params: typing.Union[typing.Dict, None] = None,
+    params: typing.Optional[typing.Dict] = None,
 ):
     fig = plt.figure(figsize=(plot_width, plot_height))
 
