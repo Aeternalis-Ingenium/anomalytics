@@ -1,4 +1,5 @@
 import abc
+import datetime
 import typing
 
 import pandas as pd
@@ -44,10 +45,88 @@ class Detector(metaclass=abc.ABCMeta):
 
         ## Parameters
         -------------
-        method : method: typing.Literal["ks", "qq"], default "ks"
+        method: typing.Literal["ks", "qq"], default "ks"
             A parameter that decide what statistical method to use for testing the analysis result.
             * "ks" for Kolmogorov Smirnov
             * "qq" for QQ Plot
+        """
+        ...
+
+    @property
+    @abc.abstractmethod
+    def fit_result(self) -> typing.Union[pd.DataFrame, pd.Series]:
+        """
+        Return the fitting result.
+
+        ## Returns
+        ----------
+        fit_result : typing.Union[pd.DataFrame, pd.Series]
+            The fitting result in a Pandas DataFrame or Series.
+        """
+        ...
+
+    @property
+    @abc.abstractmethod
+    def detection_result(self) -> typing.Union[pd.DataFrame, pd.Series]:
+        """
+        Return the result of the detection method.
+
+        ## Returns
+        ----------
+        detected_data : typing.Union[pd.DataFrame, pd.Series]
+            The detected data in a Pandas DataFrame or Series.
+        """
+        ...
+
+    @property
+    @abc.abstractmethod
+    def anomaly_threshold(self) -> float:
+        """
+        Return the anomaly threshold.
+
+        ## Returns
+        ----------
+        anomaly_threshold : float
+            The anomaly threshold.
+        """
+        ...
+
+    @property
+    @abc.abstractmethod
+    def detected_anomalies(self) -> typing.Union[pd.DataFrame, pd.Series]:
+        """
+        Return the anomalous data in the original dataset.
+
+        ## Returns
+        ----------
+        detected_anomalies : typing.Union[pd.DataFrame, pd.Series]
+            All anomalous data.
+        """
+        ...
+
+    @property
+    @abc.abstractmethod
+    def evaluation_result(self) -> pd.DataFrame:
+        """
+        Return the evaluation result in a Pandas DataFrame.
+
+        ## Returns
+        ----------
+        evaluation_result : pandas.DataFrame
+            The evaluation result from the analysis.
+        """
+        ...
+
+    @property
+    @abc.abstractmethod
+    def detection_summary(self) -> pd.DataFrame:
+        """
+        Retrieve the summary of the detected data.
+
+        ## Returns
+        ----------
+        detection_summary : pd.DataFrame
+            A DataFrame that contains the row, column, date, anomalous data, anomaly score, and anomaly threshold from the analysis.
         """
         ...
 
