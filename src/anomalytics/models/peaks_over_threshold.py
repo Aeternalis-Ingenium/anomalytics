@@ -549,6 +549,8 @@ class POTDetector(Detector):
         th_line_width: int = 2,
         alpha: float = 0.8,
     ):
+        if isinstance(self.__exceedance, pd.Series):
+            nonzero_exceedences = [exceedence for exceedence in self.__exceedance.values if exceedence > 0]
         if plot_type == "l":
             plot_line(
                 dataset=self.__dataset,
@@ -611,7 +613,7 @@ class POTDetector(Detector):
             )
         elif plot_type == "gpd":
             plot_gen_pareto(
-                dataset=self.__exceedance,
+                dataset=nonzero_exceedences,
                 title=title,
                 xlabel=xlabel,
                 ylabel=ylabel,
@@ -625,7 +627,7 @@ class POTDetector(Detector):
         elif plot_type == "gpd+ov":
             last_nonzero_params = self.__get_nonzero_params[-1]
             plot_gen_pareto(
-                dataset=self.__exceedance,
+                dataset=nonzero_exceedences,
                 title=title,
                 xlabel=xlabel,
                 ylabel=ylabel,
