@@ -419,14 +419,15 @@ class POTDetector(Detector):
         q : float, default is 0.90
             The quantile used to calculate the exceedance threshold to extract exceedances.
         """
-        if isinstance(self.__dataset, pd.DataFrame):
-            pass
-
         self.__exceedance_threshold = get_threshold_peaks_over_threshold(
-            ts=self.__dataset, t0=self.__time_window[0], anomaly_type=self.__anomaly_type, q=q
+            dataset=self.__dataset, t0=self.__time_window[0], anomaly_type=self.__anomaly_type, q=q
         )
         self.__exceedance = get_exceedance_peaks_over_threshold(
-            ts=self.__dataset, t0=self.__time_window[0], anomaly_type=self.__anomaly_type, q=q
+            dataset=self.__dataset,
+            threshold_dataset=self.__exceedance_threshold,
+            t0=self.__time_window[0],
+            anomaly_type=self.__anomaly_type,
+            q=q,
         )
 
     def fit(self) -> None:
