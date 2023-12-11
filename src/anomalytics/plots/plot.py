@@ -79,17 +79,16 @@ def plot_gen_pareto(
     plot_height: int = 8,
     plot_color: str = "black",
     alpha: float = 0.8,
-    params: typing.Union[typing.Dict, None] = None,
+    params: typing.Optional[typing.Dict] = None,
 ):
     fig = plt.figure(figsize=(plot_width, plot_height))
 
-    nonzero_exceedences = [exceedence for exceedence in dataset if exceedence > 0]
     if params:
         param_label = f"\n{round(params['c'], 3)}\n{round(params['loc'], 3)}\n{round(params['scale'], 3)}\n"
         overlay = np.linspace(
             stats.genpareto.ppf(0.1, c=params["c"], loc=params["loc"], scale=params["scale"]),
             stats.genpareto.ppf(0.999, c=params["c"], loc=params["loc"], scale=params["scale"]),
-            len(nonzero_exceedences),
+            len(dataset),
         )
         plt.plot(
             overlay,
@@ -99,12 +98,12 @@ def plot_gen_pareto(
             label=f"\nFitted Params:{param_label}",
         )
     plt.hist(
-        nonzero_exceedences,
+        dataset,
         bins=bins,
         density=True,
         alpha=alpha,
         color=plot_color,
-        label=f"{len(nonzero_exceedences)}",
+        label=f"{len(dataset)}",
     )
     plt.xlabel(xlabel)
     plt.ylabel(ylabel)

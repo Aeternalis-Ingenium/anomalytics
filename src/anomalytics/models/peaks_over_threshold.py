@@ -549,6 +549,8 @@ class POTDetector(Detector):
         th_line_width: int = 2,
         alpha: float = 0.8,
     ):
+        if isinstance(self.__exceedance, pd.Series):
+            nonzero_exceedences = [exceedence for exceedence in self.__exceedance.values if exceedence > 0]
         if plot_type == "l":
             plot_line(
                 dataset=self.__dataset,
@@ -566,8 +568,10 @@ class POTDetector(Detector):
                 alpha=alpha,
             )
         elif plot_type == "l+ath":
+            if isinstance(self.__anomaly_score, pd.Series):
+                nonzero_anomaly_scores = self.__anomaly_score[self.__anomaly_score.values > 0]
             plot_line(
-                dataset=self.__exceedance,
+                dataset=nonzero_anomaly_scores,
                 threshold=self.__anomaly_threshold,
                 title=title,
                 xlabel=xlabel,
@@ -611,7 +615,7 @@ class POTDetector(Detector):
             )
         elif plot_type == "gpd":
             plot_gen_pareto(
-                dataset=self.__exceedance,
+                dataset=nonzero_exceedences,
                 title=title,
                 xlabel=xlabel,
                 ylabel=ylabel,
@@ -623,8 +627,9 @@ class POTDetector(Detector):
                 params=None,
             )
         elif plot_type == "gpd+ov":
+            last_nonzero_params = self.__get_nonzero_params[-1]
             plot_gen_pareto(
-                dataset=self.__exceedance,
+                dataset=nonzero_exceedences,
                 title=title,
                 xlabel=xlabel,
                 ylabel=ylabel,
@@ -633,7 +638,7 @@ class POTDetector(Detector):
                 plot_height=plot_height,
                 plot_color=plot_color,
                 alpha=alpha,
-                params=self.__params,
+                params=last_nonzero_params,
             )
 
     def __str__(self) -> str:
