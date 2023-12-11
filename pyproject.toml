@@ -47,6 +47,7 @@ dependencies = [
 
 [project.urls]
 repository = "https://github.com/Aeternalis-Ingenium/anomalytics"
+documentation = "https://github.com/Aeternalis-Ingenium/anomalytics/blob/trunk/README.md"
 
 [project.optional-dependencies]
 codequality = [
