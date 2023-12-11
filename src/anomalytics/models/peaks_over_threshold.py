@@ -568,8 +568,10 @@ class POTDetector(Detector):
                 alpha=alpha,
             )
         elif plot_type == "l+ath":
+            if isinstance(self.__anomaly_score, pd.Series):
+                nonzero_anomaly_scores = self.__anomaly_score[self.__anomaly_score.values > 0]
             plot_line(
-                dataset=self.__anomaly_score,
+                dataset=nonzero_anomaly_scores,
                 threshold=self.__anomaly_threshold,
                 title=title,
                 xlabel=xlabel,
