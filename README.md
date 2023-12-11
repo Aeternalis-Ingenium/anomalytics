@@ -34,7 +34,7 @@
         <img src="https://img.shields.io/badge/docs-passing-brightgreen.svg" alt="Documentation">
     </a>
     <a href="https://pypi.org/project/anomalytics/">
-        <img src="https://img.shields.io/badge/PyPi-v0.1.4-blue.svg" alt="PyPi">
+        <img src="https://img.shields.io/badge/PyPi-v0.1.6-blue.svg" alt="PyPi">
     </a>
 </p>
 
