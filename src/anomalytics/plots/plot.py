@@ -86,13 +86,13 @@ def plot_gen_pareto(
     if params:
         param_label = f"\n{round(params['c'], 3)}\n{round(params['loc'], 3)}\n{round(params['scale'], 3)}\n"
         overlay = np.linspace(
-            stats.genpareto.ppf(0.1, c=params["c"], loc=params["loc"], scale=params["scale"]),
-            stats.genpareto.ppf(0.999, c=params["c"], loc=params["loc"], scale=params["scale"]),
-            len(dataset),
+            start=stats.genpareto.ppf(q=0.001, c=params["c"], loc=params["loc"], scale=params["scale"]),
+            stop=stats.genpareto.ppf(q=0.999, c=params["c"], loc=params["loc"], scale=params["scale"]),
+            num=dataset.shape[0],
         )
         plt.plot(
             overlay,
-            stats.genpareto.pdf(overlay, c=params["c"], loc=params["loc"], scale=params["scale"]),
+            stats.genpareto.pdf(x=overlay, c=params["c"], loc=params["loc"], scale=params["scale"]),
             c="lime",
             lw=2,
             label=f"\nFitted Params:{param_label}",
@@ -103,7 +103,7 @@ def plot_gen_pareto(
         density=True,
         alpha=alpha,
         color=plot_color,
-        label=f"{len(dataset)}",
+        label=f"Non-Zero Exceedances: {dataset.shape[0]}",
     )
     plt.xlabel(xlabel)
     plt.ylabel(ylabel)

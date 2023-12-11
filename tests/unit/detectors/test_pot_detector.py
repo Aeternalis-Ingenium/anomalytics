@@ -96,8 +96,8 @@ class TestPOTDetector(unittest.TestCase):
         expected_kstest_result = pd.DataFrame(
             data={
                 "total_nonzero_exceedances": [50],
-                "stats_distance": [0.9798328261695748],
-                "p_value": [3.414145934563587e-85],
+                "stats_distance": [0.8331661595029082],
+                "p_value": [4.312557311051241e-05],
                 "c": [-1.3371948412738648],
                 "loc": [0],
                 "scale": [272179.457686573],

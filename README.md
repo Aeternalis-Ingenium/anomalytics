@@ -30,13 +30,11 @@
     <a href="https://github.com/Aeternalis-Ingenium/anomalytics/blob/trunk/LICENSE">
         <img src="https://img.shields.io/badge/License-MIT-yellow.svg" alt="License: MIT">
     </a>
-    <!-- Replace the '#' in the href with your documentation link -->
-    <a href="#">
+    <a href="https://github.com/Aeternalis-Ingenium/anomalytics/blob/trunk/README.md">
         <img src="https://img.shields.io/badge/docs-passing-brightgreen.svg" alt="Documentation">
     </a>
-    <!-- Replace the '#' in the href with your PyPi package link -->
-    <a href="#">
-        <img src="https://img.shields.io/badge/PyPi-v0.1.0-blue.svg" alt="PyPi">
+    <a href="https://pypi.org/project/anomalytics/">
+        <img src="https://img.shields.io/badge/PyPi-v0.1.4-blue.svg" alt="PyPi">
     </a>
 </p>
 
