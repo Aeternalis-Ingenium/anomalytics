@@ -550,7 +550,7 @@ class POTDetector(Detector):
         alpha: float = 0.8,
     ):
         if isinstance(self.__exceedance, pd.Series):
-            nonzero_exceedences = [exceedence for exceedence in self.__exceedance.values if exceedence > 0]
+            nonzero_exceedences = self.__exceedance[self.__exceedance.values > 0]
         if plot_type == "l":
             plot_line(
                 dataset=self.__dataset,

@@ -215,7 +215,7 @@ def get_anomaly_score(ts: pd.Series, t0: int, gpd_params: typing.Dict) -> pd.Ser
     t1_t2_exceedances = ts.iloc[t0:]
 
     for row in range(0, t1_t2_exceedances.shape[0]):
-        fit_exceedances = ts.iloc[t0 + row :]
+        fit_exceedances = ts.iloc[: t0 + row]
         future_exeedance = t1_t2_exceedances.iloc[row]
         nonzero_fit_exceedances = fit_exceedances[fit_exceedances.values > 0.0]
         if future_exeedance > 0:
