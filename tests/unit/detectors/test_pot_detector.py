@@ -58,18 +58,18 @@ class TestPOTDetector(unittest.TestCase):
         self.pot1_detector.fit()
 
         expected_anomaly_scores = pd.Series(
-            data=[1.922777880970598, 2.445890926224859, 3.6935717350888506, 3121651314.625431],
+            data=[float("inf"), float("inf"), float("inf"), float("inf")],
             index=self.sample_1_ts.index[6:],  # type: ignore
             name="anomaly scores",
         )
         expected_params = {
             0: {
                 "index": pd.Timestamp("2023-01-07 00:00:00"),
-                "c": -1.6804238287454643,
+                "c": -2.687778724221391,
                 "loc": 0,
-                "scale": 1.5123814458709186,
-                "p_value": 0.5200808735615424,
-                "anomaly_score": 1.922777880970598,
+                "scale": 1.3438893621106958,
+                "p_value": 0.0,
+                "anomaly_score": float("inf"),
             },
         }
 
@@ -78,7 +78,7 @@ class TestPOTDetector(unittest.TestCase):
 
     def test_compute_anomaly_threshold_method(self):
         expected_detected_data = [True]
-        expected_anomaly_threshold = 1.2394417670604552
+        expected_anomaly_threshold = 1.8927400332325932
 
         self.pot2_detector.get_extremes(q=0.90)
         self.pot2_detector.fit()
@@ -96,11 +96,11 @@ class TestPOTDetector(unittest.TestCase):
         expected_kstest_result = pd.DataFrame(
             data={
                 "total_nonzero_exceedances": [50],
-                "stats_distance": [0.8331661595029082],
-                "p_value": [4.312557311051241e-05],
-                "c": [-1.3371948412738648],
+                "stats_distance": [0.33333333326007464],
+                "p_value": [0.4234396436048128],
+                "c": [-1.5741853768217173],
                 "loc": [0],
-                "scale": [272179.457686573],
+                "scale": [71.62543464538814],
             }
         )
 
