@@ -28,7 +28,9 @@ def plot_line(
         if not isinstance(threshold, pd.Series) and (
             isinstance(threshold, float) or isinstance(threshold, np.float64) or isinstance(threshold, np.number)
         ):
-            plt.axhline(threshold, c=th_color, ls=th_type, lw=th_line_width, label=f"{threshold} Anomaly Threshold")
+            plt.axhline(
+                float(threshold), c=th_color, ls=th_type, lw=th_line_width, label=f"{threshold} Anomaly Threshold"
+            )
         else:
             plt.plot(
                 dataset.index,
