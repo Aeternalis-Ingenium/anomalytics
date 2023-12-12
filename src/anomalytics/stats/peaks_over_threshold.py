@@ -82,9 +82,7 @@ def get_threshold_peaks_over_threshold(
 def get_exceedance_peaks_over_threshold(
     dataset: typing.Union[pd.DataFrame, pd.Series],
     threshold_dataset: typing.Union[pd.DataFrame, pd.Series],
-    t0: int,
     anomaly_type: typing.Literal["high", "low"] = "high",
-    q: float = 0.90,
 ) -> typing.Union[pd.DataFrame, pd.Series]:
     """
     Extract values from the time series dataset that exceed the POT threshold values.
@@ -96,14 +94,8 @@ def get_exceedance_peaks_over_threshold(
         * Pandas: One feature needs to be the temporal feature.
         * Series: The index needs to be Pandas DatetimeIndex.
 
-    t0 : int
-        Time window to find a dynamic expanding period for calculating the quantile score.
-
     anomaly_type : typing.Literal["high", "low"], default is "high"
         Type of anomaly to detect - high or low.
-
-    q : float, default is 0.90
-        The quantile used for thresholding.
 
     ## Returns
     ----------
@@ -133,12 +125,10 @@ def get_exceedance_peaks_over_threshold(
         If `t0` is not an integer.
     """
 
-    logger.debug(f"extracting exceedances from dynamic threshold using anomaly_type={anomaly_type}, t0={t0}, q={q}")
+    logger.debug(f"extracting exceedances from dynamic threshold using anomaly_type={anomaly_type}")
 
     if anomaly_type not in ["high", "low"]:
         raise ValueError(f"Invalid value! The `anomaly_type` argument must be 'high' or 'low'")
-    if t0 is None:
-        raise ValueError("Invalid value! The `t0` argument must be an integer")
 
     if isinstance(dataset, pd.Series):
         if anomaly_type == "high":
@@ -168,7 +158,108 @@ def get_exceedance_peaks_over_threshold(
     return exceedances
 
 
-def get_anomaly_score(ts: pd.Series, t0: int, gpd_params: typing.Dict) -> pd.Series:
+def __gpd_fit_dataframe(
+    exceedance_dataset: pd.DataFrame, t1_t2_exceedances: pd.DataFrame, t0: int, gpd_params: typing.Dict
+) -> typing.Dict:
+    anomaly_scores: typing.Dict = {}
+
+    for column in exceedance_dataset.columns:
+        anomaly_scores[f"{column}_anomaly_score"] = []
+    anomaly_scores["total_anomaly_score"] = []
+
+    for row in range(0, t1_t2_exceedances.shape[0]):
+        fit_exceedances = exceedance_dataset.iloc[: t0 + row]  # type: ignore
+        future_exeedance = t1_t2_exceedances.iloc[[row]]
+        total_anomaly_score = 0.0
+        gpd_params[row] = {}
+
+        for column in t1_t2_exceedances.columns:
+            nonzero_fit_exceedances = fit_exceedances[column][fit_exceedances[column] > 0.0].to_list()
+            if future_exeedance[column].iloc[0] > 0:
+                if len(nonzero_fit_exceedances) > 0:
+                    (c, loc, scale) = stats.genpareto.fit(data=nonzero_fit_exceedances, floc=0)
+                    p_value: float = stats.genpareto.sf(x=future_exeedance[column].iloc[0], c=c, loc=loc, scale=scale)
+                    inverted_p_value = 1 / p_value if p_value > 0.0 else float("inf")
+                    total_anomaly_score += inverted_p_value
+                    gpd_params[row][column] = dict(
+                        c=c,
+                        loc=loc,
+                        scale=scale,
+                        p_value=p_value,
+                        anomaly_score=inverted_p_value,
+                    )
+                    anomaly_scores[f"{column}_anomaly_score"].append(inverted_p_value)
+                else:
+                    gpd_params[row][column] = dict(
+                        c=0.0,
+                        loc=0.0,
+                        scale=0.0,
+                        p_value=0.0,
+                        anomaly_score=0.0,
+                    )
+                    anomaly_scores[f"{column}_anomaly_score"].append(0.0)
+            else:
+                gpd_params[row][column] = dict(
+                    c=0.0,
+                    loc=0.0,
+                    scale=0.0,
+                    p_value=0.0,
+                    anomaly_score=0.0,
+                )
+                anomaly_scores[f"{column}_anomaly_score"].append(0.0)
+        gpd_params[row]["total_anomaly_score"] = total_anomaly_score
+        anomaly_scores["total_anomaly_score"].append(total_anomaly_score)
+    return anomaly_scores
+
+
+def __gpd_fit_series(
+    exceedance_dataset: pd.Series, t1_t2_exceedances: pd.Series, t0: int, gpd_params: typing.Dict
+) -> typing.List:
+    anomaly_scores: typing.List = []
+    for row in range(0, t1_t2_exceedances.shape[0]):
+        fit_exceedances = exceedance_dataset.iloc[: t0 + row]
+        future_exeedance = t1_t2_exceedances.iloc[row]
+        nonzero_fit_exceedances = fit_exceedances[fit_exceedances.values > 0.0]
+        if future_exeedance > 0:
+            if len(nonzero_fit_exceedances.values) > 0:
+                (c, loc, scale) = stats.genpareto.fit(data=nonzero_fit_exceedances.values, floc=0)
+                p_value = stats.genpareto.sf(x=future_exeedance, c=c, loc=loc, scale=scale)
+                inverted_p_value = 1 / p_value if p_value > 0.0 else float("inf")
+                gpd_params[row] = dict(
+                    index=t1_t2_exceedances.index[row],
+                    c=c,
+                    loc=loc,
+                    scale=scale,
+                    p_value=p_value,
+                    anomaly_score=inverted_p_value,
+                )
+                anomaly_scores.append(inverted_p_value)
+            else:
+                gpd_params[row] = dict(
+                    index=t1_t2_exceedances.index[row],
+                    c=0.0,
+                    loc=0.0,
+                    scale=0.0,
+                    p_value=0.0,
+                    anomaly_score=0.0,
+                )
+                anomaly_scores.append(0.0)
+        else:
+            gpd_params[row] = dict(
+                index=t1_t2_exceedances.index[row],
+                c=0.0,
+                loc=0.0,
+                scale=0.0,
+                p_value=0.0,
+                anomaly_score=0.0,
+            )
+            anomaly_scores.append(0.0)
+    return anomaly_scores
+
+
+def get_anomaly_score(
+    exceedance_dataset: typing.Union[pd.DataFrame, pd.Series], t0: int, gpd_params: typing.Dict
+) -> typing.Union[pd.DataFrame, pd.Series]:
     """
     Calculate the anomaly score for each data point in a time series based on the Generalized Pareto Distribution (GPD).
 
@@ -176,7 +267,7 @@ def get_anomaly_score(ts: pd.Series, t0: int, gpd_params: typing.Dict) -> pd.Ser
 
     ## Parameters
     -------------
-    ts : pandas.Series
+    exceedance_dataset : typing.Union[pd.DataFrame, pd.Series]
         The Pandas Series that contains the exceedances.
 
     t0 : int
@@ -187,7 +278,7 @@ def get_anomaly_score(ts: pd.Series, t0: int, gpd_params: typing.Dict) -> pd.Ser
 
     ## Returns
     ----------
-    pd.Series
+    anomaly_scores : typing.Union[pd.DataFrame, pd.Series]
         A Pandas Series with anomaly scores (inverted p-value) as its values.
 
     ## Example
@@ -229,56 +320,38 @@ def get_anomaly_score(ts: pd.Series, t0: int, gpd_params: typing.Dict) -> pd.Ser
         f"calculating anomaly score using t0={t0}, scipy.stats.genpareto.fit(), and scipy.stats.genpareto.sf()"
     )
 
-    if not isinstance(ts, pd.Series):
-        raise TypeError("Invalid value! The `ts` argument must be a Pandas Series")
+    if not isinstance(exceedance_dataset, pd.DataFrame) and not isinstance(exceedance_dataset, pd.Series):
+        raise TypeError("Invalid value! The `exceedance_dataset` argument must be a Pandas DataFrame or Series")
     if t0 is None:
         raise ValueError("Invalid value! The `t0` argument must be an integer")
 
-    anomaly_scores = []
-    t1_t2_exceedances = ts.iloc[t0:]
+    t1_t2_exceedances = exceedance_dataset.iloc[t0:]
 
-    for row in range(0, t1_t2_exceedances.shape[0]):
-        fit_exceedances = ts.iloc[: t0 + row]
-        future_exeedance = t1_t2_exceedances.iloc[row]
-        nonzero_fit_exceedances = fit_exceedances[fit_exceedances.values > 0.0]
-        if future_exeedance > 0:
-            if len(nonzero_fit_exceedances.values) > 0:
-                (c, loc, scale) = stats.genpareto.fit(data=nonzero_fit_exceedances.values, floc=0)
-                p_value = stats.genpareto.sf(x=future_exeedance, c=c, loc=loc, scale=scale)
-                inverted_p_value = 1 / p_value if p_value > 0.0 else float("inf")
-                gpd_params[row] = dict(
-                    index=t1_t2_exceedances.index[row],
-                    c=c,
-                    loc=loc,
-                    scale=scale,
-                    p_value=p_value,
-                    anomaly_score=inverted_p_value,
-                )
-                anomaly_scores.append(inverted_p_value)
-            else:
-                gpd_params[row] = dict(
-                    index=t1_t2_exceedances.index[row],
-                    c=0.0,
-                    loc=0.0,
-                    scale=0.0,
-                    p_value=0.0,
-                    anomaly_score=0.0,
-                )
-                anomaly_scores.append(0.0)
-        else:
-            gpd_params[row] = dict(
-                index=t1_t2_exceedances.index[row],
-                c=0.0,
-                loc=0.0,
-                scale=0.0,
-                p_value=0.0,
-                anomaly_score=0.0,
-            )
-            anomaly_scores.append(0.0)
+    if isinstance(exceedance_dataset, pd.DataFrame):
+        anomaly_scores = pd.DataFrame(
+            data=__gpd_fit_dataframe(
+                exceedance_dataset=exceedance_dataset,
+                t1_t2_exceedances=t1_t2_exceedances,
+                t0=t0,
+                gpd_params=gpd_params,
+            ),
+        )
+
+    elif isinstance(exceedance_dataset, pd.Series):
+        anomaly_scores = pd.Series(
+            index=exceedance_dataset.index[t0:],
+            data=__gpd_fit_series(
+                exceedance_dataset=exceedance_dataset,
+                t1_t2_exceedances=t1_t2_exceedances,
+                t0=t0,
+                gpd_params=gpd_params,
+            ),
+            name="anomaly scores",
+        )
 
     logger.debug(f"successfully calculating anomaly score")
 
-    return pd.Series(index=ts.index[t0:], data=anomaly_scores, name="anomaly scores")
+    return anomaly_scores
 
 
 def get_anomaly_threshold(ts: pd.Series, t1: int, q: float = 0.90) -> float:

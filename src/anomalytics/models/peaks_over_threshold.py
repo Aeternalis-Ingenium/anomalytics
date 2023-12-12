@@ -425,9 +425,7 @@ class POTDetector(Detector):
         self.__exceedance = get_exceedance_peaks_over_threshold(
             dataset=self.__dataset,
             threshold_dataset=self.__exceedance_threshold,
-            t0=self.__time_window[0],
             anomaly_type=self.__anomaly_type,
-            q=q,
         )
 
     def fit(self) -> None:
@@ -438,7 +436,7 @@ class POTDetector(Detector):
             pass
 
         self.__anomaly_score = get_anomaly_score(
-            ts=self.__exceedance, t0=self.__time_window[0], gpd_params=self.__params
+            exceedance_dataset=self.__exceedance, t0=self.__time_window[0], gpd_params=self.__params
         )
 
     def detect(self, q: float = 0.90) -> None:
