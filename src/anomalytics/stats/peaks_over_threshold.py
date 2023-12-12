@@ -354,7 +354,9 @@ def get_anomaly_score(
     return anomaly_scores
 
 
-def get_anomaly_threshold(ts: pd.Series, t1: int, q: float = 0.90) -> float:
+def get_anomaly_threshold(
+    anomaly_score_dataset: typing.Union[pd.DataFrame, pd.Series], t1: int, q: float = 0.90
+) -> float:
     """
     Calculate a dynamic threshold based on quantiles used for comparing anomaly scores.
 
@@ -389,10 +391,22 @@ def get_anomaly_threshold(ts: pd.Series, t1: int, q: float = 0.90) -> float:
 
     logger.debug(f"calculating anomaly threshold using t1={t1}, q={q}, and `numpy.quantile()` function")
 
-    if not isinstance(ts, pd.Series):
-        raise TypeError("Invalid value! The `ts` argument must be a Pandas Series")
+    if isinstance(anomaly_score_dataset, pd.DataFrame):
+        t1_anomaly_scores = (
+            anomaly_score_dataset[  # type: ignore
+                (anomaly_score_dataset["total_anomaly_score"] > 0) & (anomaly_score_dataset["total_anomaly_score"] != float("inf"))  # type: ignore
+            ]
+            .iloc[:t1]["total_anomaly_score"]
+            .to_list()
+        )
 
-    t1_anomaly_scores = ts[(ts.values > 0) & (ts.values != float("inf"))].iloc[:t1]
+    elif isinstance(anomaly_score_dataset, pd.Series):
+        t1_anomaly_scores = anomaly_score_dataset[
+            (anomaly_score_dataset.values > 0) & (anomaly_score_dataset.values != float("inf"))
+        ].iloc[:t1]
+
+    if len(t1_anomaly_scores) == 0:
+        raise ValueError("There are no total anomaly scores per row > 0")
 
     logger.debug(f"successfully calculating anomaly threshold using {q} quantile")
 
@@ -402,7 +416,9 @@ def get_anomaly_threshold(ts: pd.Series, t1: int, q: float = 0.90) -> float:
     )
 
 
-def get_anomaly(ts: pd.Series, t1: int, q: float = 0.90) -> pd.Series:
+def get_anomaly(
+    anomaly_score_dataset: typing.Union[pd.DataFrame, pd.Series], anomaly_threshold: float, t1: int
+) -> typing.Union[pd.DataFrame, pd.Series]:
     """
     Detect anomalous data points by comparing anomaly scores with the anomaly threshold.
 
@@ -441,16 +457,19 @@ def get_anomaly(ts: pd.Series, t1: int, q: float = 0.90) -> pd.Series:
         If the `ts` argument is not a Pandas Series.
     """
 
-    logger.debug(f"detecting anomaly using t1={t1}, q={q}, and `get_anoamly_threshold()` function")
+    logger.debug(f"detecting anomaly using t1={t1}, and `get_anoamly_threshold()` function")
 
-    if not isinstance(ts, pd.Series):
-        raise TypeError("Invalid value! The `ts` argument must be a Pandas Series")
+    if isinstance(anomaly_score_dataset, pd.DataFrame):
+        t2_dataset: DataFrame = anomaly_score_dataset.iloc[self.timeframe.t1 :]  # type: ignore
+        detected_data = pd.DataFrame(
+            data={"is_anomaly": t2_dataset["total_anomaly_score"].apply(lambda x: x > anomaly_threshold).to_list()}
+        )
+    elif isinstance(anomaly_score_dataset, pd.Series):
+        t2_anomaly_scores = anomaly_score_dataset.iloc[t1:]
+        anomaly_scores_over_threshold = t2_anomaly_scores > anomaly_threshold
+        detected_data = pd.Series(
+            index=t2_anomaly_scores.index, data=anomaly_scores_over_threshold.values, name="detected data"
+        )
 
-    anomaly_threshold = get_anomaly_threshold(ts=ts, t1=t1, q=q)
-    t2_anomaly_scores = ts.iloc[t1:]
-    anomalies = t2_anomaly_scores > anomaly_threshold
-
-    logger.debug(
-        f"successfully detecting {len(anomalies[anomalies.values == True].values)} anomalies using anomaly_threshold={anomaly_threshold}"
-    )
-    return pd.Series(index=t2_anomaly_scores.index, data=anomalies.values, name="anomalies")
+    logger.debug(f"successfully detecting anomalies using anomaly_threshold={anomaly_threshold}")
+    return detected_data

@@ -451,8 +451,14 @@ class POTDetector(Detector):
         if isinstance(self.__dataset, pd.DataFrame):
             pass
 
-        self.__anomaly_threshold = get_anomaly_threshold(ts=self.__anomaly_score, t1=self.__time_window[1], q=q)
-        self.__detection = get_anomaly(ts=self.__anomaly_score, t1=self.__time_window[1], q=q)
+        self.__anomaly_threshold = get_anomaly_threshold(
+            anomaly_score_dataset=self.__anomaly_score, t1=self.__time_window[1], q=q
+        )
+        self.__detection = get_anomaly(
+            anomaly_score_dataset=self.__anomaly_score,
+            anomaly_threshold=self.__anomaly_threshold,
+            t1=self.__time_window[1],
+        )
 
     def evaluate(self, method: typing.Literal["ks", "qq"] = "ks", is_random_param: bool = False) -> None:
         """
