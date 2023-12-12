@@ -3,7 +3,6 @@ import logging
 import typing
 import warnings
 
-import numpy as np
 import pandas as pd
 
 from anomalytics.evals.kolmogorv_smirnov import ks_1sample
@@ -151,9 +150,15 @@ class POTDetector(Detector):
         """
         logger.info("start initialization of POT detection model")
 
+        if not isinstance(dataset, pd.DataFrame) and not isinstance(dataset, pd.Series):
+            raise TypeError("Invalid value! The `dataset` argument must be a Pandas DataFrame or Series")
+
         dataset = dataset.copy(deep=True)
 
-        if isinstance(dataset, pd.Series):
+        if isinstance(dataset, pd.DataFrame):
+            pass
+
+        elif isinstance(dataset, pd.Series):
             if not isinstance(dataset.index, pd.DatetimeIndex):
                 try:
                     msg = "Invalid data type! The dataset index is not pandas.DatetimeIndex - start converting to `pandas.DatetimeIndex`"
@@ -166,7 +171,6 @@ class POTDetector(Detector):
                     ) from _error
 
         self.__datetime = None
-
         self.__anomaly_type = anomaly_type
         self.__dataset = dataset
         self.__time_window = set_time_window(
