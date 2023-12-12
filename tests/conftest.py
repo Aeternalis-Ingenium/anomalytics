@@ -132,6 +132,17 @@ def get_sample_2_df(request):
     )
 
 
+@pytest.fixture(name="get_sample_3_df", scope="function")
+def get_sample_3_df(request):
+    request.cls.sample_3_df = pd.DataFrame(
+        data={
+            "datetime": pd.date_range(start="2023-01-01", periods=10),
+            "feature_1": [10, 20, 30, 40, 50, 60, 70, 80, 90, 100],
+            "feature_2": [15, 17, 24, 36, 23, 15, 75, 56, 89, 105],
+        }
+    )
+
+
 @pytest.fixture(name="get_sample_2_ts", scope="function")
 def get_sample_2_ts(request):
     request.cls.sample_2_ts = pd.Series(
