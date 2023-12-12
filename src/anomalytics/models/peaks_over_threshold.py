@@ -109,20 +109,22 @@ class POTDetector(Detector):
     """
 
     __slots__ = [
-        "__dataset",
-        "__time_window",
-        "__anomaly_type",
-        "__exceedance_threshold",
-        "__exceedance",
         "__anomaly_score",
         "__anomaly_threshold",
+        "__anomaly_type",
+        "__dataset",
+        "__datetime",
         "__detection",
         "__eval",
+        "__exceedance",
+        "__exceedance_threshold",
         "__params",
+        "__time_window",
     ]
 
     __anomaly_type: typing.Literal["high", "low"]
     __dataset: typing.Union[pd.DataFrame, pd.Series]
+    __datetime: pd.Series
     __time_window: typing.Tuple[int, int, int]
     __exceedance_threshold: typing.Union[pd.DataFrame, pd.Series]
     __exceedance: typing.Union[pd.DataFrame, pd.Series]
@@ -162,6 +164,8 @@ class POTDetector(Detector):
                     raise ValueError(
                         f"Invalid data type! The dataset index is not and can not be converted to `pandas.DatetimeIndex`"
                     ) from _error
+
+        self.__datetime = None
 
         self.__anomaly_type = anomaly_type
         self.__dataset = dataset
@@ -456,7 +460,7 @@ class POTDetector(Detector):
         )
         self.__detection = get_anomaly(
             anomaly_score_dataset=self.__anomaly_score,
-            anomaly_threshold=self.__anomaly_threshold,
+            threshold=self.__anomaly_threshold,
             t1=self.__time_window[1],
         )
 

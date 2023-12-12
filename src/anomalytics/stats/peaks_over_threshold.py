@@ -69,8 +69,10 @@ def get_threshold_peaks_over_threshold(
         raise ValueError(f"Invalid value! The `anomaly_type` argument must be 'high' or 'low'")
     if not isinstance(dataset, pd.DataFrame) and not isinstance(dataset, pd.Series):
         raise TypeError("Invalid value! The `dataset` argument must be a Pandas DataFrame or Series")
-    if t0 is None:
-        raise ValueError("Invalid value! The `t0` argument must be an integer")
+    if t0 is None or not isinstance(t0, int):
+        raise TypeError("Invalid type! `t0` must be a int")
+    if q is None or not isinstance(q, float):
+        raise TypeError("Invalid type! `q` must be a float")
     if anomaly_type == "low":
         q = 1.0 - q
 
@@ -130,7 +132,16 @@ def get_exceedance_peaks_over_threshold(
     if anomaly_type not in ["high", "low"]:
         raise ValueError(f"Invalid value! The `anomaly_type` argument must be 'high' or 'low'")
 
-    if isinstance(dataset, pd.Series):
+    if isinstance(dataset, pd.DataFrame) and isinstance(threshold_dataset, pd.DataFrame):
+        if anomaly_type == "high":
+            exceedances = dataset.subtract(threshold_dataset, fill_value=0.0).clip(lower=0.0)
+        else:
+            exceedances = pd.DataFrame(
+                np.where(dataset > threshold_dataset, 0.0, np.abs(dataset.subtract(threshold_dataset, fill_value=0))),
+                index=dataset.index,
+                columns=dataset.columns,
+            )
+    elif isinstance(dataset, pd.Series) and isinstance(threshold_dataset, pd.Series):
         if anomaly_type == "high":
             exceedances = pd.Series(
                 np.maximum(dataset - threshold_dataset, 0.0), index=dataset.index, name="exceedances"
@@ -141,17 +152,10 @@ def get_exceedance_peaks_over_threshold(
                 index=dataset.index,
                 name="exceedances",
             )
-    elif isinstance(dataset, pd.DataFrame):
-        if anomaly_type == "high":
-            exceedances = dataset.subtract(threshold_dataset, fill_value=0.0).clip(lower=0.0)
-        else:
-            exceedances = pd.DataFrame(
-                np.where(dataset > threshold_dataset, 0.0, np.abs(dataset.subtract(threshold_dataset, fill_value=0))),
-                index=dataset.index,
-                columns=dataset.columns,
-            )
     else:
-        raise TypeError("Invalid type! `dataset` argument must be either a Pandas DataFrame or Series")
+        raise TypeError(
+            "Invalid type! both `dataset` and `threshold_dataset` arguments must be of the same type: 2x Pandas DataFrame or 2x Pandas Series"
+        )
 
     logger.debug(f"successfully extracting exceedances from dynamic threshold for {anomaly_type} anomaly type")
 
@@ -319,11 +323,12 @@ def get_anomaly_score(
     logger.debug(
         f"calculating anomaly score using t0={t0}, scipy.stats.genpareto.fit(), and scipy.stats.genpareto.sf()"
     )
-
+    if t0 is None or not isinstance(t0, int):
+        raise TypeError("Invalid type! `t0` must be a int")
+    if not isinstance(gpd_params, typing.Dict):
+        raise TypeError("Invalid type! The `gpd_params` argument must be a dictionary")
     if not isinstance(exceedance_dataset, pd.DataFrame) and not isinstance(exceedance_dataset, pd.Series):
-        raise TypeError("Invalid value! The `exceedance_dataset` argument must be a Pandas DataFrame or Series")
-    if t0 is None:
-        raise ValueError("Invalid value! The `t0` argument must be an integer")
+        raise TypeError("Invalid type! The `exceedance_dataset` argument must be a Pandas DataFrame or Series")
 
     t1_t2_exceedances = exceedance_dataset.iloc[t0:]
 
@@ -336,7 +341,6 @@ def get_anomaly_score(
                 gpd_params=gpd_params,
             ),
         )
-
     elif isinstance(exceedance_dataset, pd.Series):
         anomaly_scores = pd.Series(
             index=exceedance_dataset.index[t0:],
@@ -391,6 +395,11 @@ def get_anomaly_threshold(
 
     logger.debug(f"calculating anomaly threshold using t1={t1}, q={q}, and `numpy.quantile()` function")
 
+    if t1 is None or not isinstance(t1, int):
+        raise TypeError("Invalid type! `t1` must be a int")
+    if q is None or not isinstance(q, float):
+        raise TypeError("Invalid type! `q` must be a float")
+
     if isinstance(anomaly_score_dataset, pd.DataFrame):
         t1_anomaly_scores = (
             anomaly_score_dataset[  # type: ignore
@@ -399,11 +408,14 @@ def get_anomaly_threshold(
             .iloc[:t1]["total_anomaly_score"]
             .to_list()
         )
-
     elif isinstance(anomaly_score_dataset, pd.Series):
-        t1_anomaly_scores = anomaly_score_dataset[
-            (anomaly_score_dataset.values > 0) & (anomaly_score_dataset.values != float("inf"))
-        ].iloc[:t1]
+        t1_anomaly_scores = (
+            anomaly_score_dataset[(anomaly_score_dataset.values > 0) & (anomaly_score_dataset.values != float("inf"))]
+            .iloc[:t1]
+            .values
+        )
+    else:
+        raise TypeError("Invalid type! The `anomaly_score_dataset` argument must be a Pandas DataFrame or Series")
 
     if len(t1_anomaly_scores) == 0:
         raise ValueError("There are no total anomaly scores per row > 0")
@@ -411,14 +423,12 @@ def get_anomaly_threshold(
     logger.debug(f"successfully calculating anomaly threshold using {q} quantile")
 
     return np.quantile(
-        a=t1_anomaly_scores.values,
+        a=t1_anomaly_scores,
         q=q,
     )
 
 
-def get_anomaly(
-    anomaly_score_dataset: typing.Union[pd.DataFrame, pd.Series], anomaly_threshold: float, t1: int
-) -> typing.Union[pd.DataFrame, pd.Series]:
+def get_anomaly(anomaly_score_dataset: typing.Union[pd.DataFrame, pd.Series], threshold: float, t1: int) -> pd.Series:
     """
     Detect anomalous data points by comparing anomaly scores with the anomaly threshold.
 
@@ -459,17 +469,18 @@ def get_anomaly(
 
     logger.debug(f"detecting anomaly using t1={t1}, and `get_anoamly_threshold()` function")
 
-    if isinstance(anomaly_score_dataset, pd.DataFrame):
-        t2_dataset = anomaly_score_dataset.iloc[t1:]  # type: ignore
-        detected_data = pd.DataFrame(
-            data={"is_anomaly": t2_dataset["total_anomaly_score"].apply(lambda x: x > anomaly_threshold).to_list()}
-        )
-    elif isinstance(anomaly_score_dataset, pd.Series):
-        t2_anomaly_scores = anomaly_score_dataset.iloc[t1:]
-        anomaly_scores_over_threshold = t2_anomaly_scores > anomaly_threshold
-        detected_data = pd.Series(
-            index=t2_anomaly_scores.index, data=anomaly_scores_over_threshold.values, name="detected data"
-        )
+    if not isinstance(anomaly_score_dataset, pd.DataFrame) and not isinstance(anomaly_score_dataset, pd.Series):
+        raise TypeError("Invalid type! `anomaly_score_dataset` must be a Pandas DataFrame or Series")
+    if threshold is None or not isinstance(threshold, float):
+        raise TypeError("Invalid type! `threshold` must be a float")
 
-    logger.debug(f"successfully detecting anomalies using anomaly_threshold={anomaly_threshold}")
-    return detected_data
+    t2_anomaly_scores = anomaly_score_dataset.iloc[t1:]
+
+    if isinstance(anomaly_score_dataset, pd.DataFrame):
+        detected_data = t2_anomaly_scores["total_anomaly_score"].apply(lambda x: x > threshold).to_list()
+    elif isinstance(anomaly_score_dataset, pd.Series):
+        detected_data = (t2_anomaly_scores > threshold).values
+
+    logger.debug(f"successfully detecting anomalies using anomaly_threshold={threshold}")
+
+    return pd.Series(index=t2_anomaly_scores.index, data=detected_data, name="detected data")
