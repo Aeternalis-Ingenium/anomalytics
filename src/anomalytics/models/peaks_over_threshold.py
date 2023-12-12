@@ -123,7 +123,7 @@ class POTDetector(Detector):
 
     __anomaly_type: typing.Literal["high", "low"]
     __dataset: typing.Union[pd.DataFrame, pd.Series]
-    __datetime: pd.Series
+    __datetime: typing.Optional[pd.Series]
     __time_window: typing.Tuple[int, int, int]
     __exceedance_threshold: typing.Union[pd.DataFrame, pd.Series]
     __exceedance: typing.Union[pd.DataFrame, pd.Series]
@@ -158,7 +158,19 @@ class POTDetector(Detector):
         dataset = dataset.copy(deep=True)
 
         if isinstance(dataset, pd.DataFrame):
-            pass
+            datetime64_columns = [
+                column for column in dataset.columns if pd.api.types.is_datetime64_any_dtype(dataset[column])
+            ]
+
+            if len(datetime64_columns) == 0:
+                raise ValueError(
+                    "No value! One of your feature must be the Pandas datetime64 data type. Try converting with `pandas.to_datetime()`"
+                )
+            elif len(datetime64_columns) > 1:
+                raise ValueError("Too many values! You are only allowed to have one feature with datetim64 data type.")
+
+            self.__datetime = dataset[datetime64_columns[0]]
+            self.__dataset = dataset.drop(columns=[datetime64_columns[0]], axis=1)
 
         elif isinstance(dataset, pd.Series):
             if not isinstance(dataset.index, pd.DatetimeIndex):
@@ -167,14 +179,14 @@ class POTDetector(Detector):
                     logger.debug(msg)
                     warnings.warn(msg, category=RuntimeWarning)
                     dataset.index = pd.to_datetime(dataset.index)
+                    self.__datetime = None
+                    self.__dataset = dataset
                 except TypeError as _error:
                     raise ValueError(
                         f"Invalid data type! The dataset index is not and can not be converted to `pandas.DatetimeIndex`"
                     ) from _error
 
-        self.__datetime = None
         self.__anomaly_type = anomaly_type
-        self.__dataset = dataset
         self.__time_window = set_time_window(
             total_rows=self.__dataset.shape[0],
             method="POT",
