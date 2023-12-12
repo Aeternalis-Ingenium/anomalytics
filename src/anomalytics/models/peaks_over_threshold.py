@@ -150,6 +150,8 @@ class POTDetector(Detector):
         """
         logger.info("start initialization of POT detection model")
 
+        if anomaly_type not in ["high", "low"]:
+            raise ValueError(f"Invalid value! The `anomaly_type` argument must be 'high' or 'low'")
         if not isinstance(dataset, pd.DataFrame) and not isinstance(dataset, pd.Series):
             raise TypeError("Invalid value! The `dataset` argument must be a Pandas DataFrame or Series")
 
