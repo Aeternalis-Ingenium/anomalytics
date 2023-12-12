@@ -16,20 +16,98 @@ class TestPOTDetector(unittest.TestCase):
         self.pot3_dataframe_detector = atics.get_detector(method="POT", dataset=self.sample_3_df)  # type: ignore
         self.pot4_dataframe_detector = atics.get_detector(method="POT", dataset=self.sample_3_df, anomaly_type="low")  # type: ignore
 
-    def test_instance_is_pot_detector_class(self):
+    def test_instance_is_pot_detector_class_successful(self):
         self.assertIsInstance(obj=self.pot1_series_detector, cls=POTDetector)
 
-    def test_detector_string_method(self):
+    def test_detector_string_method_successful(self):
         self.assertEqual(first=str(self.pot1_series_detector), second=str(POTDetector(dataset=self.sample_1_ts)))  # type: ignore
 
-    def test_reset_time_window_to_historical(self):
-        t0, t1, t2 = self.pot1_series_detector._POTDetector__time_window
-        self.pot1_series_detector.reset_time_window(analysis_type="historical", t0_pct=0.80, t1_pct=0.15, t2_pct=0.05)
-        self.assertNotEqual(t0, self.pot1_series_detector._POTDetector__time_window[0])
-        self.assertNotEqual(t1, self.pot1_series_detector._POTDetector__time_window[1])
-        self.assertNotEqual(t2, self.pot1_series_detector._POTDetector__time_window[2])
+    def test_reset_time_window_to_historical_successful(self):
+        t0 = self.pot1_series_detector.t0
+        t1 = self.pot1_series_detector.t1
+        t2 = self.pot1_series_detector.t2
 
-    def test_get_extremes_methods(self):
+        self.pot1_series_detector.reset_time_window(analysis_type="historical", t0_pct=0.80, t1_pct=0.15, t2_pct=0.05)
+
+        self.assertNotEqual(t0, self.pot1_series_detector.t0)
+        self.assertNotEqual(t1, self.pot1_series_detector.t1)
+        self.assertNotEqual(t2, self.pot1_series_detector.t2)
+
+    def test_exceedance_thresholds_dataframe_for_high_anomaly_type_successful(self):
+        expected_exceedance_thresholds = pd.DataFrame(
+            data={
+                "feature_1": [59.5, 59.5, 59.5, 59.5, 59.5, 59.5, 69.4, 79.3, 89.2, 99.1],
+                "feature_2": [35.40, 35.40, 35.40, 35.40, 35.40, 35.40, 72.66, 73.67, 87.88, 103.56],
+            }
+        )
+
+        self.pot3_dataframe_detector.get_extremes(q=0.99)
+
+        pd.testing.assert_frame_equal(
+            self.pot3_dataframe_detector.exceedance_thresholds, expected_exceedance_thresholds
+        )
+        pd.testing.assert_series_equal(
+            self.pot3_dataframe_detector.exceedance_thresholds["feature_1"], expected_exceedance_thresholds["feature_1"]  # type: ignore
+        )
+        pd.testing.assert_series_equal(
+            self.pot3_dataframe_detector.exceedance_thresholds["feature_2"], expected_exceedance_thresholds["feature_2"]  # type: ignore
+        )
+
+    def test_get_extremes_dataframe_with_high_anomaly_type_successful(self):
+        expected_exceedances = pd.DataFrame(
+            data={
+                "feature_1": [
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0.5,
+                    0.6000000000000085,
+                    0.7000000000000028,
+                    0.7999999999999972,
+                    0.9000000000000057,
+                ],
+                "feature_2": [
+                    0,
+                    0,
+                    0,
+                    0.5999999999999943,
+                    0,
+                    0,
+                    2.3400000000000176,
+                    0,
+                    1.1200000000000045,
+                    1.4399999999999977,
+                ],
+            }
+        )
+
+        self.pot3_dataframe_detector.get_extremes(q=0.99)
+
+        pd.testing.assert_frame_equal(self.pot3_dataframe_detector.exceedances, expected_exceedances)
+        pd.testing.assert_series_equal(
+            self.pot3_dataframe_detector.exceedances["feature_1"], expected_exceedances["feature_1"]  # type: ignore
+        )
+        pd.testing.assert_series_equal(
+            self.pot3_dataframe_detector.exceedances["feature_2"], expected_exceedances["feature_2"]  # type: ignore
+        )
+
+    def test_fit_dataframe_with_high_anomaly_type_successful(self):
+        expected_anomaly_scores = pd.DataFrame(
+            data={
+                "feature_1_anomaly_score": [float("inf"), float("inf"), float("inf"), float("inf")],
+                "feature_2_anomaly_score": [float("inf"), 0.0, 1.2988597467759642, 2.129427676525411],
+                "total_anomaly_score": [float("inf"), float("inf"), float("inf"), float("inf")],
+            }
+        )
+
+        self.pot3_dataframe_detector.get_extremes(q=0.90)
+        self.pot3_dataframe_detector.fit()
+
+        pd.testing.assert_frame_equal(left=self.pot3_dataframe_detector.fit_result, right=expected_anomaly_scores)
+
+    def test_get_extremes_series_for_high_anomaly_type_successful(self):
         self.pot1_series_detector.get_extremes(q=0.9)
 
         expected_exceedance_threshold = pd.Series(
@@ -55,7 +133,7 @@ class TestPOTDetector(unittest.TestCase):
         pd.testing.assert_series_equal(self.pot1_series_detector.exceedance_thresholds, expected_exceedance_threshold)
         pd.testing.assert_series_equal(self.pot1_series_detector.exceedances, expected_exceedance)
 
-    def test_fit_with_genpareto_method(self):
+    def test_fit_series_for_high_anomaly_type_successful(self):
         self.pot1_series_detector.get_extremes(q=0.90)
         self.pot1_series_detector.fit()
 
@@ -75,10 +153,10 @@ class TestPOTDetector(unittest.TestCase):
             },
         }
 
-        pd.testing.assert_series_equal(self.pot1_series_detector._POTDetector__anomaly_score, expected_anomaly_scores)
-        self.assertEqual(self.pot1_series_detector._POTDetector__params[0], expected_params[0])
+        pd.testing.assert_series_equal(self.pot1_series_detector.fit_result, expected_anomaly_scores)
+        self.assertEqual(self.pot1_series_detector.params[0], expected_params[0])
 
-    def test_compute_anomaly_threshold_method(self):
+    def test_detect_data_series_for_low_anomaly_type_successful(self):
         expected_detected_data = False
         expected_anomaly_threshold = 1.6609084761335131
 
@@ -89,7 +167,7 @@ class TestPOTDetector(unittest.TestCase):
         self.assertEqual(self.pot2_series_detector.anomaly_threshold, expected_anomaly_threshold)
         self.assertEqual(self.pot2_series_detector.detection_result.iloc[0], expected_detected_data)
 
-    def test_evaluation_with_ks_1sample(self):
+    def test_evaluation_with_ks_1sample_series_for_low_anomaly_type_successful(self):
         self.pot2_series_detector.get_extremes(q=0.90)
         self.pot2_series_detector.fit()
         self.pot2_series_detector.detect(q=0.90)
@@ -106,7 +184,7 @@ class TestPOTDetector(unittest.TestCase):
             }
         )
 
-        pd.testing.assert_frame_equal(self.pot2_series_detector._POTDetector__eval, expected_kstest_result)
+        pd.testing.assert_frame_equal(self.pot2_series_detector.evaluation_result, expected_kstest_result)
 
     def tearDown(self) -> None:
         return super().tearDown()
