@@ -460,7 +460,7 @@ def get_anomaly(
     logger.debug(f"detecting anomaly using t1={t1}, and `get_anoamly_threshold()` function")
 
     if isinstance(anomaly_score_dataset, pd.DataFrame):
-        t2_dataset: DataFrame = anomaly_score_dataset.iloc[self.timeframe.t1 :]  # type: ignore
+        t2_dataset = anomaly_score_dataset.iloc[t1:]  # type: ignore
         detected_data = pd.DataFrame(
             data={"is_anomaly": t2_dataset["total_anomaly_score"].apply(lambda x: x > anomaly_threshold).to_list()}
         )
