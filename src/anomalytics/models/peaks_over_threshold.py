@@ -179,12 +179,12 @@ class POTDetector(Detector):
                     logger.debug(msg)
                     warnings.warn(msg, category=RuntimeWarning)
                     dataset.index = pd.to_datetime(dataset.index)
-                    self.__datetime = None
-                    self.__dataset = dataset
                 except TypeError as _error:
                     raise ValueError(
                         f"Invalid data type! The dataset index is not and can not be converted to `pandas.DatetimeIndex`"
                     ) from _error
+            self.__datetime = None
+            self.__dataset = dataset
 
         self.__anomaly_type = anomaly_type
         self.__time_window = set_time_window(
@@ -345,7 +345,7 @@ class POTDetector(Detector):
         TypeError
             The attribute `__anomaly_threshold` is stil None.
         """
-        if not isinstance(self.__anomaly_threshold, float):
+        if self.__anomaly_threshold is None or not isinstance(self.__anomaly_threshold, float):
             raise TypeError("Invalid value! `__anomaly_threshold` attribute is still None. Try calling `detect()`")
         return self.__anomaly_threshold
 
