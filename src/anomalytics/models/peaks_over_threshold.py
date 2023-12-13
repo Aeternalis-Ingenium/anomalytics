@@ -310,7 +310,7 @@ class POTDetector(Detector):
             raise TypeError(
                 "Invalid type! `__exceedance_threshold` attribute is still None. Try calling `get_extremes()`"
             )
-        if isinstance(self.__exceedance_threshold, pd.DataFrame):
+        elif isinstance(self.__exceedance_threshold, pd.DataFrame):
             exceedance_threshold = self.__exceedance_threshold.copy(deep=True)
             exceedance_threshold["datetime"] = self.__datetime.values  # type: ignore
             return exceedance_threshold
@@ -333,7 +333,7 @@ class POTDetector(Detector):
         """
         if not isinstance(self.__exceedance, pd.DataFrame) and not isinstance(self.__exceedance, pd.Series):
             raise TypeError("Invalid type! `__exceedance` attribute is still None. Try calling `get_extremes()`")
-        if isinstance(self.__exceedance, pd.DataFrame):
+        elif isinstance(self.__exceedance, pd.DataFrame):
             exceedance = self.__exceedance.copy(deep=True)
             exceedance["datetime"] = self.__datetime.values  # type: ignore
             return exceedance
@@ -375,6 +375,10 @@ class POTDetector(Detector):
         """
         if not isinstance(self.__anomaly_score, pd.DataFrame) and not isinstance(self.__anomaly_score, pd.Series):
             raise TypeError("Invalid type! `__anomaly_score` attribute is still None. Try calling `fit()`")
+        elif isinstance(self.__anomaly_score, pd.DataFrame):
+            anomaly_score = self.__anomaly_score.copy(deep=True)
+            anomaly_score["datetime"] = self.__datetime.values[self.__time_window[0] :]  # type: ignore
+            return anomaly_score
         return self.__anomaly_score
 
     @property
