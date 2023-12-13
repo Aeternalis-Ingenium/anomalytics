@@ -7,14 +7,19 @@ import anomalytics as atics
 from anomalytics.models.peaks_over_threshold import POTDetector
 
 
-@pytest.mark.usefixtures("get_sample_1_ts", "get_sample_2_ts", "get_sample_3_df")
+@pytest.mark.usefixtures(
+    "get_sample_1_ts",
+    "get_sample_2_ts",
+    "get_sample_3_df",
+    "get_sample_4_df",
+)
 class TestPOTDetector(unittest.TestCase):
     def setUp(self) -> None:
         super().setUp()
         self.pot1_series_detector = atics.get_detector(method="POT", dataset=self.sample_1_ts)  # type: ignore
         self.pot2_series_detector = atics.get_detector(method="POT", dataset=self.sample_2_ts, anomaly_type="low")  # type: ignore
         self.pot3_dataframe_detector = atics.get_detector(method="POT", dataset=self.sample_3_df)  # type: ignore
-        self.pot4_dataframe_detector = atics.get_detector(method="POT", dataset=self.sample_3_df, anomaly_type="low")  # type: ignore
+        self.pot4_dataframe_detector = atics.get_detector(method="POT", dataset=self.sample_4_df)  # type: ignore
 
     def test_instance_is_pot_detector_class_successful(self):
         self.assertIsInstance(obj=self.pot1_series_detector, cls=POTDetector)
@@ -110,6 +115,305 @@ class TestPOTDetector(unittest.TestCase):
 
         pd.testing.assert_frame_equal(left=self.pot3_dataframe_detector.fit_result, right=expected_anomaly_scores)
 
+    def test_detect_dataframe_successful(self):
+        expected_anomaly_threshold = 2.338272951672917
+        expected_pot_thresholds = pd.DataFrame(
+            data={
+                "feature_1": [
+                    442.5,
+                    442.5,
+                    442.5,
+                    442.5,
+                    442.5,
+                    442.5,
+                    442.5,
+                    442.5,
+                    442.5,
+                    442.5,
+                    442.5,
+                    442.5,
+                    442.5,
+                    442.5,
+                    442.5,
+                    442.5,
+                    442.5,
+                    442.5,
+                    442.5,
+                    442.5,
+                    442.5,
+                    442.5,
+                    442.5,
+                    442.5,
+                    442.5,
+                    442.5,
+                    442.5,
+                    442.5,
+                    442.5,
+                    442.5,
+                    442.5,
+                    442.5,
+                    442.5,
+                    442.5,
+                    439.00000000000006,
+                    435.5,
+                    431.99999999999994,
+                    428.50000000000017,
+                    438.6,
+                    454.90000000000003,
+                    453.0,
+                    451.5,
+                    450.00000000000006,
+                    448.50000000000006,
+                    447.0,
+                    445.5,
+                    444.0,
+                    442.50000000000006,
+                    441.00000000000006,
+                    454.90000000000003,
+                ],
+                "feature_2": [
+                    532.0,
+                    532.0,
+                    532.0,
+                    532.0,
+                    532.0,
+                    532.0,
+                    532.0,
+                    532.0,
+                    532.0,
+                    532.0,
+                    532.0,
+                    532.0,
+                    532.0,
+                    532.0,
+                    532.0,
+                    532.0,
+                    532.0,
+                    532.0,
+                    532.0,
+                    532.0,
+                    532.0,
+                    532.0,
+                    532.0,
+                    532.0,
+                    532.0,
+                    532.0,
+                    532.0,
+                    532.0,
+                    532.0,
+                    532.0,
+                    532.0,
+                    532.0,
+                    532.0,
+                    532.0,
+                    531.0,
+                    530.0,
+                    529.0,
+                    528.0,
+                    527.0,
+                    526.0,
+                    525.0,
+                    532.2,
+                    531.4000000000001,
+                    530.6,
+                    534.2,
+                    534.0,
+                    533.8,
+                    535.0,
+                    535.0,
+                    535.0,
+                ],
+                "datetime": pd.date_range(start="2023-01-01", periods=50),
+            }
+        )
+        expected_pot_exceedance = pd.DataFrame(
+            data={
+                "feature_1": [
+                    0.0,
+                    0.0,
+                    0.0,
+                    0.0,
+                    45.5,
+                    0.0,
+                    0.0,
+                    0.0,
+                    0.0,
+                    29.5,
+                    0.0,
+                    0.0,
+                    37.5,
+                    0.0,
+                    10.5,
+                    0.0,
+                    0.0,
+                    0.0,
+                    0.0,
+                    0.0,
+                    0.0,
+                    0.0,
+                    0.0,
+                    0.0,
+                    0.0,
+                    0.0,
+                    0.0,
+                    0.0,
+                    0.0,
+                    0.0,
+                    0.0,
+                    0.0,
+                    0.0,
+                    0.0,
+                    0.0,
+                    0.0,
+                    0.0,
+                    0.0,
+                    0.0,
+                    26.099999999999966,
+                    0.0,
+                    0.0,
+                    0.0,
+                    0.0,
+                    0.0,
+                    0.0,
+                    0.0,
+                    0.0,
+                    0.0,
+                    203545.1,
+                ],
+                "feature_2": [
+                    0.0,
+                    0.0,
+                    0.0,
+                    0.0,
+                    344468.0,
+                    0.0,
+                    0.0,
+                    0.0,
+                    0.0,
+                    0.0,
+                    0.0,
+                    0.0,
+                    0.0,
+                    0.0,
+                    0.0,
+                    0.0,
+                    0.0,
+                    0.0,
+                    0.0,
+                    0.0,
+                    67.0,
+                    3.0,
+                    0.0,
+                    0.0,
+                    0.0,
+                    50.0,
+                    0.0,
+                    0.0,
+                    0.0,
+                    0.0,
+                    0.0,
+                    0.0,
+                    0.0,
+                    0.0,
+                    0.0,
+                    0.0,
+                    0.0,
+                    0.0,
+                    0.0,
+                    0.0,
+                    0.0,
+                    0.7999999999999545,
+                    0.0,
+                    0.0,
+                    61.799999999999955,
+                    0.0,
+                    0.0,
+                    0.0,
+                    0.0,
+                    0.0,
+                ],
+                "datetime": pd.date_range(start="2023-01-01", periods=50),
+            }
+        )
+        expected_anomaly_scores = pd.DataFrame(
+            data={
+                "feature_1_anomaly_score": [
+                    0.0,
+                    0.0,
+                    0.0,
+                    0.0,
+                    0.0,
+                    1.8927400332325932,
+                    0.0,
+                    0.0,
+                    0.0,
+                    0.0,
+                    0.0,
+                    0.0,
+                    0.0,
+                    0.0,
+                    0.0,
+                    float("inf"),
+                ],
+                "feature_2_anomaly_score": [
+                    0.0,
+                    0.0,
+                    0.0,
+                    0.0,
+                    0.0,
+                    0.0,
+                    0.0,
+                    1.0374624088737112,
+                    0.0,
+                    0.0,
+                    2.4496561812829976,
+                    0.0,
+                    0.0,
+                    0.0,
+                    0.0,
+                    0.0,
+                ],
+                "total_anomaly_score": [
+                    0.0,
+                    0.0,
+                    0.0,
+                    0.0,
+                    0.0,
+                    1.8927400332325932,
+                    0.0,
+                    1.0374624088737112,
+                    0.0,
+                    0.0,
+                    2.4496561812829976,
+                    0.0,
+                    0.0,
+                    0.0,
+                    0.0,
+                    float("inf"),
+                ],
+                "datetime": pd.date_range(start="2023-01-01", periods=50)[34:],
+            }
+        )
+
+        self.pot4_dataframe_detector.get_extremes(q=0.90)
+        self.pot4_dataframe_detector.fit()
+        self.pot4_dataframe_detector.detect(q=0.90)
+
+        expected_detected_data = pd.Series(
+            index=self.pot4_dataframe_detector.detection_result.index,
+            data=[
+                True,
+            ],
+            name="detected data",
+        )
+
+        pd.testing.assert_frame_equal(self.pot4_dataframe_detector.exceedance_thresholds, expected_pot_thresholds)
+        pd.testing.assert_frame_equal(self.pot4_dataframe_detector.exceedances, expected_pot_exceedance)
+        pd.testing.assert_frame_equal(self.pot4_dataframe_detector.fit_result, expected_anomaly_scores)
+        self.assertEqual(self.pot4_dataframe_detector.anomaly_threshold, expected_anomaly_threshold)
+        self.assertIsInstance(self.pot4_dataframe_detector.detection_result, pd.Series)
+        pd.testing.assert_series_equal(self.pot4_dataframe_detector.detection_result, expected_detected_data)
+
     def test_get_extremes_series_for_high_anomaly_type_successful(self):
         self.pot1_series_detector.get_extremes(q=0.9)
 
@@ -168,7 +472,7 @@ class TestPOTDetector(unittest.TestCase):
         self.pot2_series_detector.detect(q=0.90)
 
         self.assertEqual(self.pot2_series_detector.anomaly_threshold, expected_anomaly_threshold)
-        self.assertEqual(self.pot2_series_detector.detection_result, expected_detected_data)
+        self.assertEqual(self.pot2_series_detector.detection_result.iloc[0], expected_detected_data)
 
     def test_evaluation_with_ks_1sample_series_for_low_anomaly_type_successful(self):
         self.pot2_series_detector.get_extremes(q=0.90)
