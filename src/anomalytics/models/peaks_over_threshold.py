@@ -527,7 +527,7 @@ class POTDetector(Detector):
             assert isinstance(self.__eval, pd.DataFrame)
         else:
             visualize_qq_plot(
-                ts=self.__exceedance, stats_method="POT", fit_params=params, is_random_param=is_random_param
+                dataset=self.__exceedance, stats_method="POT", fit_params=params, is_random_param=is_random_param
             )
 
     @property

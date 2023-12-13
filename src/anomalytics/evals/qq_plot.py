@@ -1,3 +1,4 @@
+import datetime
 import logging
 import typing
 
@@ -10,7 +11,7 @@ logger = logging.getLogger(__name__)
 
 
 def calculate_theoretical_q(
-    ts: pd.Series,
+    dataset: typing.Union[pd.DataFrame, pd.Series],
     stats_method: typing.Literal[
         "AE",
         "BM",
@@ -21,7 +22,9 @@ def calculate_theoretical_q(
         "ZSCORE",
         "1CSVM",
     ],
-    fit_params: typing.Union[typing.List, typing.Dict],
+    fit_params: typing.List[
+        typing.Dict[str, typing.Union[typing.List[typing.Dict[str, float]], datetime.datetime, float]]
+    ],
     is_random_param: bool = False,
 ) -> typing.Tuple[pd.Series, np.ndarray[typing.Any, np.dtype[typing.Any]], typing.Union[typing.List, typing.Dict]]:
     """
@@ -64,18 +67,6 @@ def calculate_theoretical_q(
 
     logger.debug(f"performing theoretical quantile calculation for qq plot with fit_params={fit_params}")
 
-    if not isinstance(ts, pd.Series):
-        raise TypeError("Invalid value! The `ts` argument must be a Pandas Series")
-
-    nonzero_ts = ts[ts.values > 0]
-    sorted_nonzero_ts = np.sort(nonzero_ts)
-    q = np.arange(1, len(sorted_nonzero_ts) + 1) / (len(sorted_nonzero_ts) + 1)
-
-    if is_random_param:
-        nonzero_params = fit_params[np.random.randint(low=0, high=len(fit_params) - 1)]
-    else:
-        nonzero_params = fit_params[-1]
-
     if stats_method == "AE":
         raise NotImplementedError("Not implemented yet!")
 
@@ -92,14 +83,47 @@ def calculate_theoretical_q(
         raise NotImplementedError("Not implemented yet!")
 
     elif stats_method == "POT":
-        c = nonzero_params["c"]
-        loc = nonzero_params["loc"]
-        scale = nonzero_params["scale"]
-        theoretical_q = stats.genpareto.ppf(q=q, c=c, loc=loc, scale=scale)
-        logger.debug(
-            f"successfully performing theoretical quantile calculation for qq plot with fit_params={fit_params}"
-        )
-        return (sorted_nonzero_ts, theoretical_q, nonzero_params)
+        if isinstance(dataset, pd.DataFrame):
+            nonzero_datasets: typing.List = []
+            theoretical_qs: typing.List = []
+            nonzero_fit_params: typing.List = []
+
+            for column in dataset.columns:  # type: ignore
+                exceedence_series = dataset[column].copy()  # type: ignore
+                nonzero_exceedances = exceedence_series[exceedence_series.values > 0]
+                sorted_nonzero_exceedances = np.sort(nonzero_exceedances)
+                q = np.arange(1, len(sorted_nonzero_exceedances) + 1) / (len(sorted_nonzero_exceedances) + 1)
+
+                if is_random_param:
+                    nonzero_params = fit_params[column][np.random.randint(low=0, high=len(fit_params) - 1)]
+                else:
+                    nonzero_params = fit_params[column][-1]
+                theoretical_q = stats.genpareto.ppf(
+                    q=q, c=nonzero_params["c"], loc=nonzero_params["loc"], scale=nonzero_params["scale"]
+                )
+                nonzero_datasets.append(sorted_nonzero_exceedances)
+                theoretical_qs.append(theoretical_q)
+                nonzero_fit_params.append(nonzero_fit_params)
+
+            return (nonzero_datasets, theoretical_qs, nonzero_fit_params)
+
+        elif isinstance(dataset, pd.Series):
+            nonzero_exceedances = dataset[dataset.values > 0]
+            sorted_nonzero_exceedances = np.sort(nonzero_exceedances)
+            q = np.arange(1, len(sorted_nonzero_exceedances) + 1) / (len(sorted_nonzero_exceedances) + 1)
+
+            if is_random_param:
+                nonzero_params = fit_params[np.random.randint(low=0, high=len(fit_params) - 1)]
+            else:
+                nonzero_params = fit_params[-1]
+            c = nonzero_params["c"]
+            loc = nonzero_params["loc"]
+            scale = nonzero_params["scale"]
+            theoretical_q = stats.genpareto.ppf(q=q, c=c, loc=loc, scale=scale)
+            logger.debug(
+                f"successfully performing theoretical quantile calculation for qq plot with fit_params={fit_params}"
+            )
+            return (sorted_nonzero_exceedances, theoretical_q, nonzero_params)
 
     elif stats_method == "ZS":
         raise NotImplementedError("Not implemented yet!")
@@ -115,7 +139,7 @@ def calculate_theoretical_q(
 
 
 def visualize_qq_plot(
-    ts: pd.Series,
+    dataset: typing.Union[pd.DataFrame, pd.Series],
     stats_method: typing.Literal[
         "AE",
         "BM",
@@ -126,7 +150,9 @@ def visualize_qq_plot(
         "ZSCORE",
         "1CSVM",
     ],
-    fit_params: typing.Union[typing.List, typing.Dict],
+    fit_params: typing.List[
+        typing.Dict[str, typing.Union[typing.List[typing.Dict[str, float]], datetime.datetime, float]]
+    ],
     is_random_param: bool = False,
     plot_width: int = 15,
     plot_height: int = 10,
@@ -136,7 +162,7 @@ def visualize_qq_plot(
 
     ## Parameters
     -------------
-    ts : pandas.Series
+    dataset : pandas.Series
         A Pandas Series that contains your data.
 
     stats_method : typing.Literal["AE", "BM", "DBSCAN", "ISOF", "MAD", "POT", "ZSCORE", "1CSVM"]
@@ -173,59 +199,103 @@ def visualize_qq_plot(
 
     logger.debug(f"performing qq plot for {stats_method} analysis with total of {len(fit_params)} fir params")
 
-    if not isinstance(ts, pd.Series):
-        raise TypeError("Invalid value! The `ts` argument must be a Pandas Series")
-    if not isinstance(ts.index, pd.DatetimeIndex):
-        try:
-            datetime_index = pd.to_datetime(ts.index.values, utc=True)
-            ts.index = datetime_index
-        except Exception as err:
-            raise SyntaxError("Syntax error! Fail to convert `ts.index` into pandas.DatetimeIndex.") from err
-
-    fig = plt.figure(figsize=(plot_width, plot_height))
-    (sorted_nonzero_ts, theoretical_q, params) = calculate_theoretical_q(
-        ts=ts, fit_params=fit_params, stats_method=stats_method, is_random_param=is_random_param
-    )
+    suptitle = "QQ Plot"
+    x_label = "Theoretical Quantiles"
+    y_label = "Sample Quantiles"
 
     if stats_method == "AE":
-        raise NotImplementedError("Not implemented yet!")
+        if isinstance(dataset, pd.DataFrame):
+            raise NotImplementedError("Not implemented yet!")
+        elif isinstance(dataset, pd.Series):
+            raise NotImplementedError("Not implemented yet!")
 
     elif stats_method == "BM":
-        raise NotImplementedError("Not implemented yet!")
+        if isinstance(dataset, pd.DataFrame):
+            raise NotImplementedError("Not implemented yet!")
+        elif isinstance(dataset, pd.Series):
+            raise NotImplementedError("Not implemented yet!")
 
     elif stats_method == "DBSCAN":
-        raise NotImplementedError("Not implemented yet!")
+        if isinstance(dataset, pd.DataFrame):
+            raise NotImplementedError("Not implemented yet!")
+        elif isinstance(dataset, pd.Series):
+            raise NotImplementedError("Not implemented yet!")
 
     elif stats_method == "ISOF":
-        raise NotImplementedError("Not implemented yet!")
+        if isinstance(dataset, pd.DataFrame):
+            raise NotImplementedError("Not implemented yet!")
+        elif isinstance(dataset, pd.Series):
+            raise NotImplementedError("Not implemented yet!")
 
     elif stats_method == "MAD":
-        raise NotImplementedError("Not implemented yet!")
+        if isinstance(dataset, pd.DataFrame):
+            raise NotImplementedError("Not implemented yet!")
+        elif isinstance(dataset, pd.Series):
+            raise NotImplementedError("Not implemented yet!")
 
     elif stats_method == "POT":
-        scatter_label = f"{len(sorted_nonzero_ts)} Exceedances > 0"
-        plot_label = f"\nFitted GPD Params:\n  c: {round(params['c'], 3)}\n  loc: {round(params['loc'], 3)}\n  scale: {round(params['scale'], 3)}"  # type: ignore
-        suptitle = "QQ Plot - GPD"
+        if isinstance(dataset, pd.DataFrame):
+            (sorted_nonzero_datasets, theoretical_qs, params) = calculate_theoretical_q(
+                dataset=dataset, fit_params=fit_params, stats_method=stats_method, is_random_param=is_random_param
+            )
+            fig, axs = plt.subplots(figsize=(20, 15), nrows=len(sorted_nonzero_datasets))
+
+            for index in range(0, len(sorted_nonzero_datasets)):
+                ax = axs[index]
+                ax.scatter(
+                    theoretical_qs[index],
+                    sorted_nonzero_datasets[index],
+                    c="black",
+                    label=f"{len(sorted_nonzero_datasets[index])} Exceedences > 0",
+                )
+                ax.plot(
+                    [np.min(theoretical_qs[index]), np.max(theoretical_qs[index])],
+                    [np.min(theoretical_qs[index]), np.max(theoretical_qs[index])],
+                    c="lime",
+                    lw=2,
+                    label=f"\nFitted GPD Params:\n    c: {round(params['c'], 3)}\n    loc: {round(params['loc'], 3)}\n    scale: {round(params['scale'], 3)}",  # type: ignore
+                )
+                ax.set_xlabel(x_label)
+                ax.set_ylabel(y_label)
+                ax.set_box_aspect(0.5)
+                ax.legend(loc="upper left", shadow=True, fancybox=True)
+                ax.set_title(f"\nDataset Column - {index}", fontsize=12)
+            fig.suptitle(suptitle, fontsize=12)
+
+        elif isinstance(dataset, pd.Series):
+            (sorted_nonzero_dataset, theoretical_q, params) = calculate_theoretical_q(
+                dataset=dataset, fit_params=fit_params, stats_method=stats_method, is_random_param=is_random_param
+            )
+            fig = plt.figure(figsize=(plot_width, plot_height))
+            scatter_label = f"{len(sorted_nonzero_dataset)} Exceedances > 0"
+            plot_label = f"\nFitted GPD Params:\n  c: {round(params['c'], 3)}\n  loc: {round(params['loc'], 3)}\n  scale: {round(params['scale'], 3)}"  # type: ignore
+
+            plt.scatter(theoretical_q, sorted_nonzero_dataset, c="black", label=scatter_label)
+            plt.plot(
+                [np.min(theoretical_q), np.max(theoretical_q)],
+                [np.min(theoretical_q), np.max(theoretical_q)],
+                c="lime",
+                lw=2,
+                label=plot_label,
+            )
+            plt.xlabel(x_label)
+            plt.ylabel(y_label)
+            plt.title(f"Series Dataset", fontsize=12)
+            fig.legend(loc="upper left", shadow=True, fancybox=True)
+            fig.suptitle(suptitle, fontsize=12)
 
     elif stats_method == "ZS":
-        raise NotImplementedError("Not implemented yet!")
+        if isinstance(dataset, pd.DataFrame):
+            raise NotImplementedError("Not implemented yet!")
+        elif isinstance(dataset, pd.Series):
+            raise NotImplementedError("Not implemented yet!")
 
     elif stats_method == "1CSVM":
-        raise NotImplementedError("Not implemented yet!")
+        if isinstance(dataset, pd.DataFrame):
+            raise NotImplementedError("Not implemented yet!")
+        elif isinstance(dataset, pd.Series):
+            raise NotImplementedError("Not implemented yet!")
 
     logger.debug(f"fail to plot qq for {stats_method} analysis")
 
-    plt.scatter(theoretical_q, sorted_nonzero_ts, c="black", label=scatter_label)
-    plt.plot(
-        [np.min(theoretical_q), np.max(theoretical_q)],
-        [np.min(theoretical_q), np.max(theoretical_q)],
-        c="lime",
-        lw=2,
-        label=plot_label,
-    )
-    plt.xlabel("Theoretical Quantiles")
-    plt.ylabel("Sample Quantiles")
-    plt.title(f"Period: {ts.index[0]} - {ts.index[-1]}", fontsize=12)
-    fig.legend(loc="upper left", shadow=True, fancybox=True)
-    fig.suptitle(suptitle, fontsize=12)
     plt.show()
