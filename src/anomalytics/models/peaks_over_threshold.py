@@ -550,15 +550,29 @@ class POTDetector(Detector):
         t1_t2_time_window = self.__time_window[1] + self.__time_window[2]
 
         if isinstance(self.__dataset, pd.DataFrame):
-            pass
+            for column in self.__dataset.columns:
+                for row in range(0, t1_t2_time_window):
+                    if column != "total_anomaly_score":
+                        if (
+                            self.__params[row][column]["c"] != 0
+                            or self.__params[row][column]["loc"] != 0
+                            or self.__params[row][column]["scale"] != 0
+                        ):
+                            nonzero_params.append(
+                                {
+                                    "c": self.__params[row][column]["c"],
+                                    "loc": self.__params[row][column]["loc"],
+                                    "scale": self.__params[row][column]["scale"],
+                                }
+                            )
         elif isinstance(self.__dataset, pd.Series):
             for row in range(0, t1_t2_time_window):  # type: ignore
                 if (
-                    self.params[row]["c"] != 0  # type: ignore
-                    or self.params[row]["loc"] != 0  # type: ignore
-                    or self.params[row]["scale"] != 0  # type: ignore
+                    self.__params[row]["c"] != 0  # type: ignore
+                    or self.__params[row]["loc"] != 0  # type: ignore
+                    or self.__params[row]["scale"] != 0  # type: ignore
                 ):
-                    nonzero_params.append(self.params[row])
+                    nonzero_params.append(self.__params[row])
         return nonzero_params
 
     @property
