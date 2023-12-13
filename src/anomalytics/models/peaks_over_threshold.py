@@ -310,6 +310,10 @@ class POTDetector(Detector):
             raise TypeError(
                 "Invalid type! `__exceedance_threshold` attribute is still None. Try calling `get_extremes()`"
             )
+        if isinstance(self.__exceedance_threshold, pd.DataFrame):
+            exceedance_threshold = self.__exceedance_threshold.copy(deep=True)
+            exceedance_threshold["datetime"] = self.__datetime.values  # type: ignore
+            return exceedance_threshold
         return self.__exceedance_threshold
 
     @property
@@ -329,6 +333,10 @@ class POTDetector(Detector):
         """
         if not isinstance(self.__exceedance, pd.DataFrame) and not isinstance(self.__exceedance, pd.Series):
             raise TypeError("Invalid type! `__exceedance` attribute is still None. Try calling `get_extremes()`")
+        if isinstance(self.__exceedance, pd.DataFrame):
+            exceedance = self.__exceedance.copy(deep=True)
+            exceedance["datetime"] = self.__datetime.values  # type: ignore
+            return exceedance
         return self.__exceedance
 
     @property

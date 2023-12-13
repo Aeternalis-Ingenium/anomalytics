@@ -38,6 +38,7 @@ class TestPOTDetector(unittest.TestCase):
             data={
                 "feature_1": [59.5, 59.5, 59.5, 59.5, 59.5, 59.5, 69.4, 79.3, 89.2, 99.1],
                 "feature_2": [35.40, 35.40, 35.40, 35.40, 35.40, 35.40, 72.66, 73.67, 87.88, 103.56],
+                "datetime": pd.date_range(start="2023-01-01", periods=10),
             }
         )
 
@@ -80,6 +81,7 @@ class TestPOTDetector(unittest.TestCase):
                     1.1200000000000045,
                     1.4399999999999977,
                 ],
+                "datetime": pd.date_range(start="2023-01-01", periods=10),
             }
         )
 
