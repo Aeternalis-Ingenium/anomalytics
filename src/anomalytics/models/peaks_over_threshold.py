@@ -515,29 +515,31 @@ class POTDetector(Detector):
         kstest_result : None
             If `method` is "ks", then the method assign a Pandas DataFrame with statistical distance and p-value to `__eval` attribute.
         """
+        if not isinstance(self.__exceedance, pd.DataFrame) and not isinstance(self.__exceedance, pd.Series):
+            raise TypeError("Invalid Type! `__exceedance` attribute must be a Pandas DataFrame or Series")
+
         params = self.__get_nonzero_params
 
-        if isinstance(self.__dataset, pd.DataFrame):
-            pass
-        elif isinstance(self.__dataset, pd.Series):
-            if method == "ks":
-                self.__eval = pd.DataFrame(
-                    data=ks_1sample(dataset=self.__exceedance, stats_method="POT", fit_params=params)
-                )
-                assert isinstance(self.__eval, pd.DataFrame)
-            else:
-                visualize_qq_plot(
-                    ts=self.__exceedance, stats_method="POT", fit_params=params, is_random_param=is_random_param
-                )
+        if method == "ks":
+            self.__eval = pd.DataFrame(
+                data=ks_1sample(dataset=self.__exceedance, stats_method="POT", fit_params=params)
+            )
+            assert isinstance(self.__eval, pd.DataFrame)
+        else:
+            visualize_qq_plot(
+                ts=self.__exceedance, stats_method="POT", fit_params=params, is_random_param=is_random_param
+            )
 
     @property
-    def __get_nonzero_params(self) -> typing.List[typing.Dict[str, typing.Union[datetime.datetime, float]]]:
+    def __get_nonzero_params(
+        self,
+    ) -> typing.List[typing.Dict[str, typing.Union[typing.List[typing.Dict[str, float]], datetime.datetime, float]]]:
         """
         Filter and return only GPD params where there are at least 1 parameter that is greater than 0.
 
         ## Returns
         ----------
-        parameters : typing.List[typing.Dict[str, typing.Union[datetime.datetime, float]]]
+        parameters : typing.List[typing.Dict[str, typing.Union[typing.List[typing.Dict[str, float]], datetime.datetime, float]]]
             A list of all parameters stored in __params that are greater than 0.
         """
         if self.__time_window[0] is None:
@@ -546,11 +548,12 @@ class POTDetector(Detector):
         if len(self.params) == 0:
             raise ValueError("`__params` is still empty. Need to call `fit()` first!")
 
-        nonzero_params = []
+        nonzero_params: typing.List = []
         t1_t2_time_window = self.__time_window[1] + self.__time_window[2]
 
         if isinstance(self.__dataset, pd.DataFrame):
-            for column in self.__dataset.columns:
+            for index, column in enumerate(self.__dataset.columns):
+                nonzero_params.append({column: []})
                 for row in range(0, t1_t2_time_window):
                     if column != "total_anomaly_score":
                         if (
@@ -558,13 +561,14 @@ class POTDetector(Detector):
                             or self.__params[row][column]["loc"] != 0
                             or self.__params[row][column]["scale"] != 0
                         ):
-                            nonzero_params.append(
+                            nonzero_params[index][column].append(
                                 {
                                     "c": self.__params[row][column]["c"],
                                     "loc": self.__params[row][column]["loc"],
                                     "scale": self.__params[row][column]["scale"],
                                 }
                             )
+
         elif isinstance(self.__dataset, pd.Series):
             for row in range(0, t1_t2_time_window):  # type: ignore
                 if (
