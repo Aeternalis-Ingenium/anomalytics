@@ -109,9 +109,20 @@ class TestPOTDetector(unittest.TestCase):
                 "datetime": pd.date_range(start="2023-01-01", periods=10)[6:],
             }
         )
+        expected_params = [
+            {"c": -2.020681654255883, "loc": 0, "scale": 10.103408271279417},
+            {"c": -4.216342466354261, "loc": 0, "scale": 25.29805479812557},
+            {"c": -5.247337720538409, "loc": 0, "scale": 36.73136404376887},
+            {"c": -2.764709117887601, "loc": 0, "scale": 22.11767294310081},
+            {"c": -1.6148134739114448, "loc": 0, "scale": 9.68888084346867},
+            {"c": -2.4907573384041193, "loc": 0, "scale": 58.28372171865636},
+            {"c": -1.2641494213744446, "loc": 0, "scale": 29.581096460161987},
+        ]
 
         self.pot3_dataframe_detector.get_extremes(q=0.90)
         self.pot3_dataframe_detector.fit()
+        gpd_params = self.pot3_dataframe_detector._POTDetector__get_nonzero_params
+        self.assertEqual(gpd_params, expected_params)
 
         pd.testing.assert_frame_equal(left=self.pot3_dataframe_detector.fit_result, right=expected_anomaly_scores)
 
