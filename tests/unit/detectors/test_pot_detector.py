@@ -109,14 +109,23 @@ class TestPOTDetector(unittest.TestCase):
                 "datetime": pd.date_range(start="2023-01-01", periods=10)[6:],
             }
         )
+
         expected_params = [
-            {"c": -2.020681654255883, "loc": 0, "scale": 10.103408271279417},
-            {"c": -4.216342466354261, "loc": 0, "scale": 25.29805479812557},
-            {"c": -5.247337720538409, "loc": 0, "scale": 36.73136404376887},
-            {"c": -2.764709117887601, "loc": 0, "scale": 22.11767294310081},
-            {"c": -1.6148134739114448, "loc": 0, "scale": 9.68888084346867},
-            {"c": -2.4907573384041193, "loc": 0, "scale": 58.28372171865636},
-            {"c": -1.2641494213744446, "loc": 0, "scale": 29.581096460161987},
+            {
+                "feature_1": [
+                    {"c": -2.020681654255883, "loc": 0, "scale": 10.103408271279417},
+                    {"c": -4.216342466354261, "loc": 0, "scale": 25.29805479812557},
+                    {"c": -5.247337720538409, "loc": 0, "scale": 36.73136404376887},
+                    {"c": -2.764709117887601, "loc": 0, "scale": 22.11767294310081},
+                ]
+            },
+            {
+                "feature_2": [
+                    {"c": -1.6148134739114448, "loc": 0, "scale": 9.68888084346867},
+                    {"c": -2.4907573384041193, "loc": 0, "scale": 58.28372171865636},
+                    {"c": -1.2641494213744446, "loc": 0, "scale": 29.581096460161987},
+                ]
+            },
         ]
 
         self.pot3_dataframe_detector.get_extremes(q=0.90)
@@ -409,6 +418,7 @@ class TestPOTDetector(unittest.TestCase):
         self.pot4_dataframe_detector.get_extremes(q=0.90)
         self.pot4_dataframe_detector.fit()
         self.pot4_dataframe_detector.detect(q=0.90)
+        self.pot4_dataframe_detector.evaluate(method="ks")
 
         expected_detected_data = pd.Series(
             index=self.pot4_dataframe_detector.detection_result.index,
@@ -418,12 +428,25 @@ class TestPOTDetector(unittest.TestCase):
             name="detected data",
         )
 
+        expected_kstest_result = pd.DataFrame(
+            data={
+                "column": ["feature_1", "feature_2"],
+                "total_nonzero_exceedances": [6, 6],
+                "stats_distance": [0.33333333326007464, 0.23890536818033575],
+                "p_value": [0.4234396436048128, 0.8129992920335909],
+                "c": [-1.5741853768217173, 4.436897420262396],
+                "loc": [0, 0],
+                "scale": [71.62543464538814, 5.2466211265916485],
+            }
+        )
+
         pd.testing.assert_frame_equal(self.pot4_dataframe_detector.exceedance_thresholds, expected_pot_thresholds)
         pd.testing.assert_frame_equal(self.pot4_dataframe_detector.exceedances, expected_pot_exceedance)
         pd.testing.assert_frame_equal(self.pot4_dataframe_detector.fit_result, expected_anomaly_scores)
         self.assertEqual(self.pot4_dataframe_detector.anomaly_threshold, expected_anomaly_threshold)
         self.assertIsInstance(self.pot4_dataframe_detector.detection_result, pd.Series)
         pd.testing.assert_series_equal(self.pot4_dataframe_detector.detection_result, expected_detected_data)
+        pd.testing.assert_frame_equal(self.pot4_dataframe_detector.evaluation_result, expected_kstest_result)
 
     def test_get_extremes_series_for_high_anomaly_type_successful(self):
         self.pot1_series_detector.get_extremes(q=0.9)
