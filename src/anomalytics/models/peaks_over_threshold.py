@@ -3,6 +3,7 @@ import logging
 import typing
 import warnings
 
+import numpy as np
 import pandas as pd
 
 from anomalytics.evals.kolmogorv_smirnov import ks_1sample
@@ -403,7 +404,8 @@ class POTDetector(Detector):
             The attribute `__dataset` is neither a Pandas DataFrame, nor a Pandas Series.
         """
         if isinstance(self.__dataset, pd.DataFrame):
-            pass
+            t1_t2_indices = self.__detection[self.__detection].index + self.__anomaly_score.index.start
+            return self.__dataset.iloc[t1_t2_indices]
 
         elif isinstance(self.__dataset, pd.Series):
             try:
@@ -470,9 +472,6 @@ class POTDetector(Detector):
         q : float, default is 0.90
             The quantile used to calculate the anomaly threshold to detect the anomalies.
         """
-        if isinstance(self.__dataset, pd.DataFrame):
-            pass
-
         self.__anomaly_threshold = get_anomaly_threshold(
             anomaly_score_dataset=self.__anomaly_score, t1=self.__time_window[1], q=q
         )
@@ -505,13 +504,19 @@ class POTDetector(Detector):
             If `method` is "ks", then the method assign a Pandas DataFrame with statistical distance and p-value to `__eval` attribute.
         """
         params = self.__get_nonzero_params
-        if method == "ks":
-            self.__eval = pd.DataFrame(data=ks_1sample(ts=self.__exceedance, stats_method="POT", fit_params=params))
-            assert isinstance(self.__eval, pd.DataFrame)
-        else:
-            visualize_qq_plot(
-                ts=self.__exceedance, stats_method="POT", fit_params=params, is_random_param=is_random_param
-            )
+
+        if isinstance(self.__dataset, pd.DataFrame):
+            pass
+        elif isinstance(self.__dataset, pd.Series):
+            if method == "ks":
+                self.__eval = pd.DataFrame(
+                    data=ks_1sample(dataset=self.__exceedance, stats_method="POT", fit_params=params)
+                )
+                assert isinstance(self.__eval, pd.DataFrame)
+            else:
+                visualize_qq_plot(
+                    ts=self.__exceedance, stats_method="POT", fit_params=params, is_random_param=is_random_param
+                )
 
     @property
     def __get_nonzero_params(self) -> typing.List[typing.Dict[str, typing.Union[datetime.datetime, float]]]:
@@ -530,36 +535,66 @@ class POTDetector(Detector):
             raise ValueError("`__params` is still empty. Need to call `fit()` first!")
 
         nonzero_params = []
-        for row in range(0, self.__time_window[1] + self.__time_window[2]):  # type: ignore
-            if (
-                self.params[row]["c"] != 0  # type: ignore
-                or self.params[row]["loc"] != 0  # type: ignore
-                or self.params[row]["scale"] != 0  # type: ignore
-            ):
-                nonzero_params.append(self.params[row])
+        t1_t2_time_window = self.__time_window[1] + self.__time_window[2]
+
+        if isinstance(self.__dataset, pd.DataFrame):
+            pass
+        elif isinstance(self.__dataset, pd.Series):
+            for row in range(0, t1_t2_time_window):  # type: ignore
+                if (
+                    self.params[row]["c"] != 0  # type: ignore
+                    or self.params[row]["loc"] != 0  # type: ignore
+                    or self.params[row]["scale"] != 0  # type: ignore
+                ):
+                    nonzero_params.append(self.params[row])
         return nonzero_params
 
     @property
     def detection_summary(self) -> pd.DataFrame:
         try:
-            detected_anomalies = self.detected_anomalies
+            detected_anomalous_data = self.detected_anomalies
         except Exception as _error:
             raise TypeError(
                 "Invalid type! The `__detection` attribute is still None. Try calling `detect()`"
             ) from _error
 
         if isinstance(self.__dataset, pd.DataFrame):
-            #! TODO: Write logic to get all anomalous data, anomaly scores, index, temporal features, and anomaly threshold.
-            pass
-        elif isinstance(self.__dataset, pd.Series):
+            anomalous_datetime = self.__datetime.iloc[detected_anomalous_data.index]  # type: ignore
+            detected_anomaly = self.__anomaly_score[self.__detection]
+            anomalous_data = []
+            columns = []
+            datetime_indices = []
+            rows = []
+            anomaly_scores = []
+            total_anomaly_scores = []
+
+            for row in range(0, detected_anomalous_data.shape[0]):
+                for column in detected_anomalous_data.columns:
+                    columns.append(column)
+                    anomalous_data.append(detected_anomalous_data[column].iloc[row])
+                    datetime_indices.append(anomalous_datetime.iloc[row])
+                    rows.append(row)
+                    anomaly_scores.append(detected_anomaly[f"{column}_anomaly_score"].iloc[row])
+                    total_anomaly_scores.append(detected_anomaly["total_anomaly_score"].iloc[row])
+
             data = dict(
-                row=[self.__dataset.index.get_loc(index) + 1 for index in detected_anomalies.index],
-                datetime=[index for index in detected_anomalies.index],
-                anomalous_data=[data for data in detected_anomalies.values],
-                anomaly_score=[score for score in self.__anomaly_score[detected_anomalies.index].values],
-                anomaly_threshold=[self.__anomaly_threshold] * detected_anomalies.shape[0],
+                row=rows,
+                column=columns,
+                anomalous_data=anomalous_data,
+                anomaly_score=anomaly_scores,
+                total_anomaly_score=total_anomaly_scores,
+                anomaly_threshold=[self.__anomaly_threshold] * len(anomalous_data),
             )
-        return pd.DataFrame(data=data)
+
+        elif isinstance(self.__dataset, pd.Series):
+            datetime_indices = [index for index in detected_anomalous_data.index]
+            data = dict(
+                row=[self.__dataset.index.get_loc(index) for index in detected_anomalous_data.index],
+                anomalous_data=[data for data in detected_anomalous_data.values],
+                anomaly_score=[score for score in self.__anomaly_score[detected_anomalous_data.index].values],
+                anomaly_threshold=[self.__anomaly_threshold] * detected_anomalous_data.shape[0],
+            )
+        return pd.DataFrame(index=datetime_indices, data=data)
 
     def plot(
         self,
