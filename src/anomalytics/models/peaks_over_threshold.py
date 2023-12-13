@@ -398,6 +398,9 @@ class POTDetector(Detector):
         """
         if not isinstance(self.__detection, pd.DataFrame) and not isinstance(self.__detection, pd.Series):
             raise TypeError("Invalid type! `__detection` attribute is still None. Try calling `detect()`")
+        elif isinstance(self.__detection, pd.DataFrame):
+            detection = self.__detection.copy(deep=True)
+            detection["datetime"] = self.__datetime.values[self.__time_window[0] + self.__time_window[1] :]  # type: ignore
         return self.__detection
 
     @property
@@ -468,9 +471,6 @@ class POTDetector(Detector):
         """
         Fit the exceedances into GPD and use the parameters to compute the anomaly scores.
         """
-        if isinstance(self.__dataset, pd.DataFrame):
-            pass
-
         self.__anomaly_score = get_anomaly_score(
             exceedance_dataset=self.__exceedance, t0=self.__time_window[0], gpd_params=self.__params
         )

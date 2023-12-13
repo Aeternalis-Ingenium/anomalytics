@@ -168,7 +168,7 @@ class TestPOTDetector(unittest.TestCase):
         self.pot2_series_detector.detect(q=0.90)
 
         self.assertEqual(self.pot2_series_detector.anomaly_threshold, expected_anomaly_threshold)
-        self.assertEqual(self.pot2_series_detector.detection_result.iloc[0], expected_detected_data)
+        self.assertEqual(self.pot2_series_detector.detection_result, expected_detected_data)
 
     def test_evaluation_with_ks_1sample_series_for_low_anomaly_type_successful(self):
         self.pot2_series_detector.get_extremes(q=0.90)
