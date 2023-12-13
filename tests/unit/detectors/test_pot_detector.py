@@ -101,6 +101,7 @@ class TestPOTDetector(unittest.TestCase):
                 "feature_1_anomaly_score": [float("inf"), float("inf"), float("inf"), float("inf")],
                 "feature_2_anomaly_score": [float("inf"), 0.0, 1.2988597467759642, 2.129427676525411],
                 "total_anomaly_score": [float("inf"), float("inf"), float("inf"), float("inf")],
+                "datetime": pd.date_range(start="2023-01-01", periods=10)[6:],
             }
         )
 
