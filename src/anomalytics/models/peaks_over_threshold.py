@@ -9,7 +9,7 @@ import pandas as pd
 from anomalytics.evals.kolmogorv_smirnov import ks_1sample
 from anomalytics.evals.qq_plot import visualize_qq_plot
 from anomalytics.models.abstract import Detector
-from anomalytics.plots.plot import plot_gen_pareto, plot_hist, plot_line
+from anomalytics.plots.plot import visualize
 from anomalytics.stats.peaks_over_threshold import (
     get_anomaly,
     get_anomaly_score,
@@ -109,20 +109,22 @@ class POTDetector(Detector):
     """
 
     __slots__ = [
-        "__dataset",
-        "__time_window",
-        "__anomaly_type",
-        "__exceedance_threshold",
-        "__exceedance",
         "__anomaly_score",
         "__anomaly_threshold",
+        "__anomaly_type",
+        "__dataset",
+        "__datetime",
         "__detection",
         "__eval",
+        "__exceedance",
+        "__exceedance_threshold",
         "__params",
+        "__time_window",
     ]
 
     __anomaly_type: typing.Literal["high", "low"]
     __dataset: typing.Union[pd.DataFrame, pd.Series]
+    __datetime: typing.Optional[pd.Series]
     __time_window: typing.Tuple[int, int, int]
     __exceedance_threshold: typing.Union[pd.DataFrame, pd.Series]
     __exceedance: typing.Union[pd.DataFrame, pd.Series]
@@ -149,9 +151,29 @@ class POTDetector(Detector):
         """
         logger.info("start initialization of POT detection model")
 
+        if anomaly_type not in ["high", "low"]:
+            raise ValueError(f"Invalid value! The `anomaly_type` argument must be 'high' or 'low'")
+        if not isinstance(dataset, pd.DataFrame) and not isinstance(dataset, pd.Series):
+            raise TypeError("Invalid value! The `dataset` argument must be a Pandas DataFrame or Series")
+
         dataset = dataset.copy(deep=True)
 
-        if isinstance(dataset, pd.Series):
+        if isinstance(dataset, pd.DataFrame):
+            datetime64_columns = [
+                column for column in dataset.columns if pd.api.types.is_datetime64_any_dtype(dataset[column])
+            ]
+
+            if len(datetime64_columns) == 0:
+                raise ValueError(
+                    "No value! One of your feature must be the Pandas datetime64 data type. Try converting with `pandas.to_datetime()`"
+                )
+            elif len(datetime64_columns) > 1:
+                raise ValueError("Too many values! You are only allowed to have one feature with datetim64 data type.")
+
+            self.__datetime = dataset[datetime64_columns[0]]
+            self.__dataset = dataset.drop(columns=[datetime64_columns[0]], axis=1)
+
+        elif isinstance(dataset, pd.Series):
             if not isinstance(dataset.index, pd.DatetimeIndex):
                 try:
                     msg = "Invalid data type! The dataset index is not pandas.DatetimeIndex - start converting to `pandas.DatetimeIndex`"
@@ -162,9 +184,10 @@ class POTDetector(Detector):
                     raise ValueError(
                         f"Invalid data type! The dataset index is not and can not be converted to `pandas.DatetimeIndex`"
                     ) from _error
+            self.__datetime = None
+            self.__dataset = dataset
 
         self.__anomaly_type = anomaly_type
-        self.__dataset = dataset
         self.__time_window = set_time_window(
             total_rows=self.__dataset.shape[0],
             method="POT",
@@ -263,6 +286,70 @@ class POTDetector(Detector):
         ----------
         params : typing.Dict
             The GPD parameters.
+
+        ## Examples
+        -----------
+        __dataset : pandas.DataFrame
+            ```json
+            {
+                0: {
+                    "col_1": {
+                        "c": 0.0,
+                        "loc": 0,
+                        "scale": 0.0,
+                        "p_value": 0.0,
+                        "anomaly_score": 0.0,
+                    },
+                    "col_2": {
+                        "c": -1.6148134739114448,
+                        "loc": 0,
+                        "scale": 9.68888084346867,
+                        "p_value": 0.000012345,
+                        "anomaly_score": 355.1234,
+                    },
+                    "total_anomaly_score": 355.1234,
+                },
+                1: {
+                    "col_1": {
+                        "c": -2.764709117887601,
+                        "loc": 0,
+                        "scale": 22.11767294310081,
+                        "p_value": 0.0,
+                        "anomaly_score": 20.1234,
+                    },
+                    "col_2": {
+                        "c": -5.247337720538409,
+                        "loc": 0,
+                        "scale": 36.73136404376887,
+                        "p_value": 0.000012345,
+                        "anomaly_score": 876.1234,
+                    },
+                    "total_anomaly_score": 896.2468,
+                },
+            }
+            ```
+
+        __dataset : pandas.Series
+            ```json
+            {
+                0: {
+                    "index": pd.Timestamp("2023-01-07 00:00:00"),
+                    "c": -2.687778724221391,
+                    "loc": 0,
+                    "scale": 1.3438893621106958,
+                    "p_value": 0.0,
+                    "anomaly_score": float("inf"),
+                },
+                1: {
+                    "index": pd.Timestamp("2023-01-08 00:00:00"),
+                    "c": -1.8725554221391,
+                    "loc": 0,
+                    "scale": 1.3438893621106958,
+                    "p_value": 0.0,
+                    "anomaly_score": 127.23451123,
+                },
+            }
+            ```
         """
         return self.__params
 
@@ -287,6 +374,10 @@ class POTDetector(Detector):
             raise TypeError(
                 "Invalid type! `__exceedance_threshold` attribute is still None. Try calling `get_extremes()`"
             )
+        elif isinstance(self.__exceedance_threshold, pd.DataFrame):
+            exceedance_threshold = self.__exceedance_threshold.copy(deep=True)
+            exceedance_threshold["datetime"] = self.__datetime.values  # type: ignore
+            return exceedance_threshold
         return self.__exceedance_threshold
 
     @property
@@ -306,6 +397,10 @@ class POTDetector(Detector):
         """
         if not isinstance(self.__exceedance, pd.DataFrame) and not isinstance(self.__exceedance, pd.Series):
             raise TypeError("Invalid type! `__exceedance` attribute is still None. Try calling `get_extremes()`")
+        elif isinstance(self.__exceedance, pd.DataFrame):
+            exceedance = self.__exceedance.copy(deep=True)
+            exceedance["datetime"] = self.__datetime.values  # type: ignore
+            return exceedance
         return self.__exceedance
 
     @property
@@ -323,7 +418,7 @@ class POTDetector(Detector):
         TypeError
             The attribute `__anomaly_threshold` is stil None.
         """
-        if not isinstance(self.__anomaly_threshold, float):
+        if self.__anomaly_threshold is None or not isinstance(self.__anomaly_threshold, float):
             raise TypeError("Invalid value! `__anomaly_threshold` attribute is still None. Try calling `detect()`")
         return self.__anomaly_threshold
 
@@ -344,6 +439,10 @@ class POTDetector(Detector):
         """
         if not isinstance(self.__anomaly_score, pd.DataFrame) and not isinstance(self.__anomaly_score, pd.Series):
             raise TypeError("Invalid type! `__anomaly_score` attribute is still None. Try calling `fit()`")
+        elif isinstance(self.__anomaly_score, pd.DataFrame):
+            anomaly_score = self.__anomaly_score.copy(deep=True)
+            anomaly_score["datetime"] = self.__datetime.values[self.__time_window[0] :]  # type: ignore
+            return anomaly_score
         return self.__anomaly_score
 
     @property
@@ -363,6 +462,10 @@ class POTDetector(Detector):
         """
         if not isinstance(self.__detection, pd.DataFrame) and not isinstance(self.__detection, pd.Series):
             raise TypeError("Invalid type! `__detection` attribute is still None. Try calling `detect()`")
+        elif isinstance(self.__detection, pd.DataFrame):
+            detection = self.__detection.copy(deep=True)
+            detection["datetime"] = self.__datetime.values[self.__time_window[0] + self.__time_window[1] :]  # type: ignore
+            return detection
         return self.__detection
 
     @property
@@ -381,13 +484,17 @@ class POTDetector(Detector):
             The attribute `__dataset` is neither a Pandas DataFrame, nor a Pandas Series.
         """
         if isinstance(self.__dataset, pd.DataFrame):
-            pass
-
+            t2_anomaly_scores = self.__anomaly_score.copy().iloc[self.__time_window[1] :]
+            t1t2_dataset = self.__dataset.iloc[self.__time_window[0] :].copy().reset_index(drop=False, names=["row"])
+            detected_anomalous_data = t1t2_dataset.iloc[t2_anomaly_scores.index].copy()
+            return pd.concat(objs=[detected_anomalous_data, t2_anomaly_scores], axis=1)
         elif isinstance(self.__dataset, pd.Series):
             try:
                 detected_anomalies = self.__detection[self.__detection.values == True]
-            except TypeError:
-                raise TypeError("Invalid type! The `__detection` attribute is still None. Try calling `detect()`")
+            except Exception as _error:
+                raise ValueError(
+                    "Invalid type! The `__detection` attribute is still None. Try calling `detect()`"
+                ) from _error
             return self.__dataset[detected_anomalies.index]
         raise TypeError("Invalid type! The `__dataset` attribute is neither a Pandas DataFrame, nor a Pandas Series")
 
@@ -419,25 +526,21 @@ class POTDetector(Detector):
         q : float, default is 0.90
             The quantile used to calculate the exceedance threshold to extract exceedances.
         """
-        if isinstance(self.__dataset, pd.DataFrame):
-            pass
-
         self.__exceedance_threshold = get_threshold_peaks_over_threshold(
-            ts=self.__dataset, t0=self.__time_window[0], anomaly_type=self.__anomaly_type, q=q
+            dataset=self.__dataset, t0=self.__time_window[0], anomaly_type=self.__anomaly_type, q=q
         )
         self.__exceedance = get_exceedance_peaks_over_threshold(
-            ts=self.__dataset, t0=self.__time_window[0], anomaly_type=self.__anomaly_type, q=q
+            dataset=self.__dataset,
+            threshold_dataset=self.__exceedance_threshold,
+            anomaly_type=self.__anomaly_type,
         )
 
     def fit(self) -> None:
         """
         Fit the exceedances into GPD and use the parameters to compute the anomaly scores.
         """
-        if isinstance(self.__dataset, pd.DataFrame):
-            pass
-
         self.__anomaly_score = get_anomaly_score(
-            ts=self.__exceedance, t0=self.__time_window[0], gpd_params=self.__params
+            exceedance_dataset=self.__exceedance, t0=self.__time_window[0], gpd_params=self.__params
         )
 
     def detect(self, q: float = 0.90) -> None:
@@ -449,11 +552,14 @@ class POTDetector(Detector):
         q : float, default is 0.90
             The quantile used to calculate the anomaly threshold to detect the anomalies.
         """
-        if isinstance(self.__dataset, pd.DataFrame):
-            pass
-
-        self.__anomaly_threshold = get_anomaly_threshold(ts=self.__anomaly_score, t1=self.__time_window[1], q=q)
-        self.__detection = get_anomaly(ts=self.__anomaly_score, t1=self.__time_window[1], q=q)
+        self.__anomaly_threshold = get_anomaly_threshold(
+            anomaly_score_dataset=self.__anomaly_score, t1=self.__time_window[1], q=q
+        )
+        self.__detection = get_anomaly(
+            anomaly_score_dataset=self.__anomaly_score,
+            threshold=self.__anomaly_threshold,
+            t1=self.__time_window[1],
+        )
 
     def evaluate(self, method: typing.Literal["ks", "qq"] = "ks", is_random_param: bool = False) -> None:
         """
@@ -477,24 +583,72 @@ class POTDetector(Detector):
         kstest_result : None
             If `method` is "ks", then the method assign a Pandas DataFrame with statistical distance and p-value to `__eval` attribute.
         """
+        if not isinstance(self.__exceedance, pd.DataFrame) and not isinstance(self.__exceedance, pd.Series):
+            raise TypeError("Invalid Type! `__exceedance` attribute must be a Pandas DataFrame or Series")
+
         params = self.__get_nonzero_params
+
         if method == "ks":
-            self.__eval = pd.DataFrame(data=ks_1sample(ts=self.__exceedance, stats_method="POT", fit_params=params))
+            self.__eval = pd.DataFrame(
+                data=ks_1sample(dataset=self.__exceedance, stats_method="POT", fit_params=params)  # type: ignore
+            )
             assert isinstance(self.__eval, pd.DataFrame)
         else:
             visualize_qq_plot(
-                ts=self.__exceedance, stats_method="POT", fit_params=params, is_random_param=is_random_param
+                dataset=self.__exceedance,
+                stats_method="POT",
+                fit_params=params,
+                is_random_param=is_random_param,
             )
 
     @property
-    def __get_nonzero_params(self) -> typing.List[typing.Dict[str, typing.Union[datetime.datetime, float]]]:
+    def __get_nonzero_params(
+        self,
+    ) -> typing.List[
+        typing.Dict[
+            str, typing.Union[typing.List[typing.Dict[str, typing.Union[float, int]]], typing.Union[float, int]]
+        ]
+    ]:
         """
         Filter and return only GPD params where there are at least 1 parameter that is greater than 0.
 
         ## Returns
         ----------
-        parameters : typing.List[typing.Dict[str, typing.Union[datetime.datetime, float]]]
+        nonzero_parameters : typing.List[typing.Dict[str, typing.Union[typing.List[typing.Dict[str, typing.Union[float, int]]], typing.Union[float, int]]]]
             A list of all parameters stored in __params that are greater than 0.
+
+        ## Examples
+        -----------
+        __dataset : pandas.DataFrame
+            ```json
+            [
+                {
+                    "col_1": [
+                        {"c": -2.020681654255883, "loc": 0, "scale": 10.103408271279417},
+                        {"c": -4.216342466354261, "loc": 0, "scale": 25.29805479812557},
+                        {"c": -5.247337720538409, "loc": 0, "scale": 36.73136404376887},
+                        {"c": -2.764709117887601, "loc": 0, "scale": 22.11767294310081},
+                    ]
+                },
+                {
+                    "col_2": [
+                        {"c": -1.6148134739114448, "loc": 0, "scale": 9.68888084346867},
+                        {"c": -2.4907573384041193, "loc": 0, "scale": 58.28372171865636},
+                        {"c": -1.2641494213744446, "loc": 0, "scale": 29.581096460161987},
+                    ]
+                },
+            ]
+            ```
+
+        __dataset : pandas.Series
+            ```json
+            [
+                {"c": -2.020681654255883, "loc": 0, "scale": 10.103408271279417},
+                {"c": -4.216342466354261, "loc": 0, "scale": 25.29805479812557},
+                {"c": -5.247337720538409, "loc": 0, "scale": 36.73136404376887},
+                {"c": -2.764709117887601, "loc": 0, "scale": 22.11767294310081},
+            ]
+            ```
         """
         if self.__time_window[0] is None:
             raise ValueError("Invalid value! `t1` is not set?")
@@ -502,14 +656,35 @@ class POTDetector(Detector):
         if len(self.params) == 0:
             raise ValueError("`__params` is still empty. Need to call `fit()` first!")
 
-        nonzero_params = []
-        for row in range(0, self.__time_window[1] + self.__time_window[2]):  # type: ignore
-            if (
-                self.params[row]["c"] != 0  # type: ignore
-                or self.params[row]["loc"] != 0  # type: ignore
-                or self.params[row]["scale"] != 0  # type: ignore
-            ):
-                nonzero_params.append(self.params[row])
+        nonzero_params: typing.List = []
+        t1_t2_time_window = self.__time_window[1] + self.__time_window[2]
+
+        if isinstance(self.__dataset, pd.DataFrame):
+            for index, column in enumerate(self.__dataset.columns):
+                nonzero_params.append({column: []})
+                for row in range(0, t1_t2_time_window):
+                    if column != "total_anomaly_score":
+                        if (
+                            self.__params[row][column]["c"] != 0
+                            or self.__params[row][column]["loc"] != 0
+                            or self.__params[row][column]["scale"] != 0
+                        ):
+                            nonzero_params[index][column].append(
+                                {
+                                    "c": self.__params[row][column]["c"],
+                                    "loc": self.__params[row][column]["loc"],
+                                    "scale": self.__params[row][column]["scale"],
+                                }
+                            )
+
+        elif isinstance(self.__dataset, pd.Series):
+            for row in range(0, t1_t2_time_window):  # type: ignore
+                if (
+                    self.__params[row]["c"] != 0  # type: ignore
+                    or self.__params[row]["loc"] != 0  # type: ignore
+                    or self.__params[row]["scale"] != 0  # type: ignore
+                ):
+                    nonzero_params.append(self.__params[row])
         return nonzero_params
 
     @property
@@ -522,124 +697,245 @@ class POTDetector(Detector):
             ) from _error
 
         if isinstance(self.__dataset, pd.DataFrame):
-            #! TODO: Write logic to get all anomalous data, anomaly scores, index, temporal features, and anomaly threshold.
-            pass
+            t1_datetime = self.__datetime.iloc[self.__time_window[0] :].copy().reset_index(drop=False)  # type: ignore
+            anomalous_datetime = t1_datetime.iloc[detected_anomalies.index].copy()
+            if (anomalous_datetime["index"].values == detected_anomalies["row"].values).all():
+                confirmed_anomalous_datetime = anomalous_datetime.drop(columns=["index"], axis=1).values.flatten()
+            else:
+                raise ValueError("Invalid value! `index` values from datetime and detected anomalies are not the same")
+
+            detected_anomalies["anomaly_threshold"] = [self.__anomaly_threshold] * detected_anomalies.shape[0]
+            detected_anomalies.index = confirmed_anomalous_datetime
+            detected_anomaly_summary = detected_anomalies[
+                detected_anomalies["total_anomaly_score"] > detected_anomalies["anomaly_threshold"]
+            ]
+            datetime_indices = detected_anomaly_summary.index
+            data = detected_anomaly_summary.to_dict("list")
+
         elif isinstance(self.__dataset, pd.Series):
+            datetime_indices = [index for index in detected_anomalies.index]
             data = dict(
-                row=[self.__dataset.index.get_loc(index) + 1 for index in detected_anomalies.index],
-                datetime=[index for index in detected_anomalies.index],
+                row=[self.__dataset.index.get_loc(index) for index in detected_anomalies.index],
                 anomalous_data=[data for data in detected_anomalies.values],
                 anomaly_score=[score for score in self.__anomaly_score[detected_anomalies.index].values],
                 anomaly_threshold=[self.__anomaly_threshold] * detected_anomalies.shape[0],
             )
-        return pd.DataFrame(data=data)
+        return pd.DataFrame(index=datetime_indices, data=data)
+
+    def __filter_nonzero_df2ts(self, dataset: pd.DataFrame) -> typing.List[pd.Series]:
+        return [dataset[dataset[column].values > 0][column].copy() for column in dataset.columns]
+
+    def __filter_nonzero_ts(self, dataset: pd.Series) -> pd.Series:
+        return dataset[dataset.values > 0].copy()
+
+    def __df2ts(self, dataset: pd.DataFrame) -> typing.List[pd.Series]:
+        return [dataset[column].copy() for column in dataset.columns]
+
+    def __full_df(self, dataset: pd.DataFrame) -> pd.DataFrame:
+        df = dataset.copy()
+        if df.shape[0] == self.__time_window[2]:
+            df.index = self.__datetime.copy()[self.__time_window[0] + self.__time_window[1] :].values.flatten()  # type: ignore
+        elif df.shape[0] == self.__time_window[1] + self.__time_window[2]:
+            df.index = self.__datetime.copy()[self.__time_window[0] :].values.flatten()  # type: ignore
+        else:
+            df.index = self.__datetime.copy().values.flatten()  # type: ignore
+        return df
 
     def plot(
         self,
-        plot_type: typing.Literal["l", "l+eth", "l+ath", "hist", "gpd", "gpd+ov"],
+        ptype: typing.Literal[
+            "hist-dataset-df",
+            "hist-dataset-ts",
+            "hist-gpd-df",
+            "hist-gpd-ts",
+            "line-anomaly-score-df",
+            "line-anomaly-score-ts",
+            "line-dataset-df",
+            "line-dataset-ts",
+            "line-exceedance-df",
+            "line-exceedance-ts",
+        ],
         title: str,
         xlabel: str,
         ylabel: str,
-        bins: typing.Optional[int] = 50,
-        plot_width: int = 13,
-        plot_height: int = 8,
+        plot_width: int = 15,
+        plot_height: int = 10,
         plot_color: str = "black",
         th_color: str = "red",
         th_type: str = "dashed",
         th_line_width: int = 2,
         alpha: float = 0.8,
+        bins: typing.Optional[int] = 50,
     ):
-        if isinstance(self.__exceedance, pd.Series):
-            nonzero_exceedences = self.__exceedance[self.__exceedance.values > 0]
-        if plot_type == "l":
-            plot_line(
-                dataset=self.__dataset,
-                threshold=None,
-                title=title,
-                xlabel=xlabel,
-                ylabel=ylabel,
-                is_threshold=False,
-                plot_width=plot_width,
-                plot_height=plot_height,
-                plot_color=plot_color,
-                th_color=th_color,
-                th_type=th_type,
-                th_line_width=th_line_width,
-                alpha=alpha,
-            )
-        elif plot_type == "l+ath":
-            if isinstance(self.__anomaly_score, pd.Series):
-                nonzero_anomaly_scores = self.__anomaly_score[self.__anomaly_score.values > 0]
-            plot_line(
-                dataset=nonzero_anomaly_scores,
-                threshold=self.__anomaly_threshold,
-                title=title,
-                xlabel=xlabel,
-                ylabel=ylabel,
-                is_threshold=True,
-                plot_width=plot_width,
-                plot_height=plot_height,
-                plot_color=plot_color,
-                th_color=th_color,
-                th_type=th_type,
-                th_line_width=th_line_width,
-                alpha=alpha,
-            )
-        elif plot_type == "l+eth":
-            plot_line(
-                dataset=self.__dataset,
-                threshold=self.__exceedance_threshold,
-                title=title,
-                xlabel=xlabel,
-                ylabel=ylabel,
-                is_threshold=True,
-                plot_width=plot_width,
-                plot_height=plot_height,
-                plot_color=plot_color,
-                th_color=th_color,
-                th_type=th_type,
-                th_line_width=th_line_width,
-                alpha=alpha,
-            )
-        elif plot_type == "hist":
-            plot_hist(
-                dataset=self.__dataset,
-                title=title,
-                xlabel=xlabel,
-                ylabel=ylabel,
-                bins=bins,
-                plot_width=plot_width,
-                plot_height=plot_height,
-                plot_color=plot_color,
-                alpha=alpha,
-            )
-        elif plot_type == "gpd":
-            plot_gen_pareto(
-                dataset=nonzero_exceedences,
-                title=title,
-                xlabel=xlabel,
-                ylabel=ylabel,
-                bins=bins,
-                plot_width=plot_width,
-                plot_height=plot_height,
-                plot_color=plot_color,
-                alpha=alpha,
-                params=None,
-            )
-        elif plot_type == "gpd+ov":
-            last_nonzero_params = self.__get_nonzero_params[-1]
-            plot_gen_pareto(
-                dataset=nonzero_exceedences,
-                title=title,
-                xlabel=xlabel,
-                ylabel=ylabel,
-                bins=bins,
-                plot_width=plot_width,
-                plot_height=plot_height,
-                plot_color=plot_color,
-                alpha=alpha,
-                params=last_nonzero_params,
-            )
+        if ptype in ["hist-gpd-df", "hist-gpd-ts"]:
+            if len(self.__params) == 0:
+                raise ValueError("Invalid value! `__params` attribute is still None. Try calling `fit()` first")
+
+        elif ptype in ["line-anomaly-score-df", "line-anomaly-score-ts"]:
+            if self.__anomaly_threshold is None:
+                raise ValueError(
+                    "Invalid value! `__anomaly_threshold` attribute is still None. Try calling `detect()` first"
+                )
+
+        if isinstance(self.__dataset, pd.DataFrame):
+            if ptype == "hist-dataset-df":
+                return visualize(
+                    plot_type=ptype,
+                    title=title,
+                    xlabel=xlabel,
+                    ylabel=ylabel,
+                    plot_width=plot_width,
+                    plot_height=plot_height,
+                    plot_color=plot_color,
+                    alpha=alpha,
+                    columns=self.__dataset.columns,
+                    datasets=self.__df2ts(dataset=self.__dataset),
+                    bins=bins,  # type: ignore
+                )
+            elif ptype == "hist-gpd-df":
+                nonzero_params = self.__get_nonzero_params
+                last_nonzero_params = []
+
+                for index, column in enumerate(self.__exceedance.columns):
+                    last_nonzero_params.append(nonzero_params[index][column][-1])  # type: ignore
+
+                return visualize(
+                    plot_type=ptype,
+                    title=title,
+                    xlabel=xlabel,
+                    ylabel=ylabel,
+                    plot_width=plot_width,
+                    plot_height=plot_height,
+                    plot_color=plot_color,
+                    alpha=alpha,
+                    columns=self.__exceedance.columns,
+                    datasets=self.__filter_nonzero_df2ts(dataset=self.__exceedance),
+                    params=last_nonzero_params,  # type: ignore
+                    bins=bins,  # type: ignore
+                )
+            elif ptype == "line-anomaly-score-df":
+                return visualize(
+                    plot_type=ptype,
+                    title=title,
+                    xlabel=xlabel,
+                    ylabel=ylabel,
+                    plot_width=plot_width,
+                    plot_height=plot_height,
+                    plot_color=plot_color,
+                    alpha=alpha,
+                    columns=self.__anomaly_score.columns,
+                    datasets=self.__filter_nonzero_df2ts(dataset=self.__full_df(dataset=self.__anomaly_score)),
+                    threshold=self.__anomaly_threshold,
+                    th_color=th_color,
+                    th_type=th_type,
+                    th_line_width=th_line_width,
+                )
+            elif ptype == "line-dataset-df":
+                return visualize(
+                    plot_type=ptype,
+                    title=title,
+                    xlabel=xlabel,
+                    ylabel=ylabel,
+                    plot_width=plot_width,
+                    plot_height=plot_height,
+                    plot_color=plot_color,
+                    alpha=alpha,
+                    columns=self.__dataset.columns,
+                    datasets=self.__df2ts(dataset=self.__full_df(dataset=self.__dataset)),
+                )
+            elif ptype == "line-exceedance-df":
+                return visualize(
+                    plot_type=ptype,
+                    title=title,
+                    xlabel=xlabel,
+                    ylabel=ylabel,
+                    plot_width=plot_width,
+                    plot_height=plot_height,
+                    plot_color=plot_color,
+                    alpha=alpha,
+                    columns=self.__dataset.columns,
+                    datasets=self.__df2ts(dataset=self.__full_df(dataset=self.__dataset)),
+                    thresholds=self.__df2ts(dataset=self.exceedance_thresholds),
+                    th_color=th_color,
+                    th_type=th_type,
+                    th_line_width=th_line_width,
+                )
+        elif isinstance(self.__dataset, pd.Series):
+            if ptype == "hist-dataset-ts":
+                return visualize(
+                    plot_type=ptype,
+                    title=title,
+                    xlabel=xlabel,
+                    ylabel=ylabel,
+                    plot_width=plot_width,
+                    plot_height=plot_height,
+                    plot_color=plot_color,
+                    alpha=alpha,
+                    dataset=self.__dataset,
+                    bins=bins,  # type: ignore
+                )
+            elif ptype == "hist-gpd-ts":
+                last_nonzero_params = self.__get_nonzero_params[-1]  # type: ignore
+
+                return visualize(  # type: ignore
+                    plot_type=ptype,
+                    title=title,
+                    xlabel=xlabel,
+                    ylabel=ylabel,
+                    plot_width=plot_width,
+                    plot_height=plot_height,
+                    plot_color=plot_color,
+                    alpha=alpha,
+                    dataset=self.__filter_nonzero_ts(dataset=self.__exceedance),
+                    params=last_nonzero_params,
+                    bins=bins,
+                )
+            elif ptype == "line-anomaly-score-ts":
+                return visualize(
+                    plot_type=ptype,
+                    title=title,
+                    xlabel=xlabel,
+                    ylabel=ylabel,
+                    plot_width=plot_width,
+                    plot_height=plot_height,
+                    plot_color=plot_color,
+                    alpha=alpha,
+                    dataset=self.__filter_nonzero_ts(dataset=self.__anomaly_score),
+                    threshold=self.__anomaly_threshold,
+                    th_color=th_color,
+                    th_type=th_type,
+                    th_line_width=th_line_width,
+                )
+            elif ptype == "line-dataset-ts":
+                return visualize(
+                    plot_type=ptype,
+                    title=title,
+                    xlabel=xlabel,
+                    ylabel=ylabel,
+                    plot_width=plot_width,
+                    plot_height=plot_height,
+                    plot_color=plot_color,
+                    alpha=alpha,
+                    dataset=self.__dataset,
+                )
+            elif ptype == "line-exceedance-ts":
+                return visualize(
+                    plot_type=ptype,
+                    title=title,
+                    xlabel=xlabel,
+                    ylabel=ylabel,
+                    plot_width=plot_width,
+                    plot_height=plot_height,
+                    plot_color=plot_color,
+                    alpha=alpha,
+                    dataset=self.__dataset,
+                    threshold=self.__exceedance_threshold,
+                    th_color=th_color,
+                    th_type=th_type,
+                    th_line_width=th_line_width,
+                )
+        else:
+            raise TypeError("Invalid type! `dataset` must be a Pandas DataFrame or Series")
 
     def __str__(self) -> str:
         return "POT"

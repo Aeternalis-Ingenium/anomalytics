@@ -60,8 +60,12 @@ class TestEmailNotification(unittest.TestCase):
 
     def test_setup_with_message(self):
         expected_payload = (
-            "Test notification message"
-            "\n\nRow: 9 | Date: 2023-01-10 | Anomalous Data: 75521 | Anomaly Score: 8.123 | Anomaly Threshold: 7.3"
+            "Test notification message\n\n"
+            "Date: 2023-01-10\n\n"
+            "Row: 9\n\n"
+            "Anomaly: 75521\n\n"
+            "Anomaly Score: 8.123\n\n"
+            "Anomaly Threshold: 7.3"
         )
 
         self.gmail_notification.setup(detection_summary=self.sample_1_detection_summary, message=self.test_message)  # type: ignore
@@ -74,7 +78,7 @@ class TestEmailNotification(unittest.TestCase):
 
     def test_setup_without_message(self):
         expected_payload = (
-            "Row: 9 | Date: 2023-01-10 | Anomalous Data: 75521 | Anomaly Score: 8.123 | Anomaly Threshold: 7.3"
+            "Date: 2023-01-10\n\nRow: 9\n\nAnomaly: 75521\n\nAnomaly Score: 8.123\n\nAnomaly Threshold: 7.3"
         )
 
         self.gmail_notification.setup(detection_summary=self.sample_1_detection_summary, message=None)  # type: ignore

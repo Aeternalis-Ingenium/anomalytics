@@ -9,18 +9,20 @@ logger = logging.getLogger(__name__)
 
 
 def get_threshold_peaks_over_threshold(
-    ts: pd.Series,
+    dataset: typing.Union[pd.DataFrame, pd.Series],
     t0: int,
     anomaly_type: typing.Literal["high", "low"] = "high",
     q: float = 0.90,
-) -> pd.Series:
+) -> typing.Union[pd.DataFrame, pd.Series]:
     """
     Calculate the Peaks Over Threshold (POT) threshold values for a given time series.
 
     ## Parameters
     -------------
-    ts : pandas.Series
-        One feature dataset and a datetime index to calculate the quantiles.
+    dataset : typing.Union[pd.DataFrame, pd.Series]
+        A dataset that must be either Pandas DataFrame or Series for threshold computation.
+        * Pandas: One feature needs to be the temporal feature.
+        * Series: The index needs to be Pandas DatetimeIndex.
 
     t0 : int
         Time window to find a dynamic expanding period for calculating the quantile score.
@@ -33,8 +35,8 @@ def get_threshold_peaks_over_threshold(
 
     ## Returns
     ----------
-    pd.Series
-        A Pandas Series where each value is a threshold to extract the exceedances from the original dataset.
+    exceedance_threshold : typing.Union[pd.DataFrame, pd.Series]
+        A Pandas DataFrame or Series where each value is a threshold to extract the exceedances from the original dataset.
 
     ## Example
     ----------
@@ -54,7 +56,9 @@ def get_threshold_peaks_over_threshold(
     ValueError
         If the `anomaly_type` argument is not 'high' or 'low'.
     TypeError
-        If the `ts` argument is not a Pandas Series.
+        If the `ts` argument is neither a Pandas DataFrame nor Series.
+    ValueError
+        If `t0` is not an integer.
     """
 
     logger.debug(
@@ -63,44 +67,41 @@ def get_threshold_peaks_over_threshold(
 
     if anomaly_type not in ["high", "low"]:
         raise ValueError(f"Invalid value! The `anomaly_type` argument must be 'high' or 'low'")
-    if not isinstance(ts, pd.Series):
-        raise TypeError("Invalid value! The `ts` argument must be a Pandas Series")
-    if t0 is None:
-        raise ValueError("Invalid value! The `t0` argument must be an integer")
+    if not isinstance(dataset, pd.DataFrame) and not isinstance(dataset, pd.Series):
+        raise TypeError("Invalid value! The `dataset` argument must be a Pandas DataFrame or Series")
+    if t0 is None or not isinstance(t0, int):
+        raise TypeError("Invalid type! `t0` must be a int")
+    if q is None or not isinstance(q, float):
+        raise TypeError("Invalid type! `q` must be a float")
     if anomaly_type == "low":
         q = 1.0 - q
 
     logger.debug(f"successfully calculating threshold for {anomaly_type} anomaly type")
 
-    return ts.expanding(min_periods=t0).quantile(q=q).bfill()
+    return dataset.expanding(min_periods=t0).quantile(q=q).bfill()
 
 
 def get_exceedance_peaks_over_threshold(
-    ts: pd.Series,
-    t0: int,
+    dataset: typing.Union[pd.DataFrame, pd.Series],
+    threshold_dataset: typing.Union[pd.DataFrame, pd.Series],
     anomaly_type: typing.Literal["high", "low"] = "high",
-    q: float = 0.90,
-) -> pd.Series:
+) -> typing.Union[pd.DataFrame, pd.Series]:
     """
     Extract values from the time series dataset that exceed the POT threshold values.
 
     ## Parameters
     -------------
-    ts : pandas.Series
-        The dataset with one feature and a datetime index.
-
-    t0 : int
-        Time window to find a dynamic expanding period for calculating the quantile score.
+    dataset : typing.Union[pd.DataFrame, pd.Series]
+        A dataset that must be either Pandas DataFrame or Series.
+        * Pandas: One feature needs to be the temporal feature.
+        * Series: The index needs to be Pandas DatetimeIndex.
 
     anomaly_type : typing.Literal["high", "low"], default is "high"
         Type of anomaly to detect - high or low.
 
-    q : float, default is 0.90
-        The quantile used for thresholding.
-
     ## Returns
     ----------
-    pd.Series
+    exceedances : typing.Union[pd.DataFrame, pd.Series]
         A Pandas Series with values exceeding the POT thresholds.
 
     ## Example
@@ -122,30 +123,147 @@ def get_exceedance_peaks_over_threshold(
         If the `anomaly_type` argument is not 'high' or 'low'.
     TypeError
         If the `ts` argument is not a Pandas Series.
+    ValueError
+        If `t0` is not an integer.
     """
 
-    logger.debug(f"extracting exceedances from dynamic threshold using anomaly_type={anomaly_type}, t0={t0}, q={q}")
+    logger.debug(f"extracting exceedances from dynamic threshold using anomaly_type={anomaly_type}")
 
     if anomaly_type not in ["high", "low"]:
         raise ValueError(f"Invalid value! The `anomaly_type` argument must be 'high' or 'low'")
-    if not isinstance(ts, pd.Series):
-        raise TypeError("Invalid value! The `ts` argument must be a Pandas Series")
-    if t0 is None:
-        raise ValueError("Invalid value! The `t0` argument must be an integer")
 
-    pot_thresholds = get_threshold_peaks_over_threshold(ts=ts, t0=t0, anomaly_type=anomaly_type, q=q)
-
-    if anomaly_type == "high":
-        pot_exceedances = np.maximum(ts - pot_thresholds, 0.0)
+    if isinstance(dataset, pd.DataFrame) and isinstance(threshold_dataset, pd.DataFrame):
+        if anomaly_type == "high":
+            exceedances = dataset.subtract(threshold_dataset, fill_value=0.0).clip(lower=0.0)
+        else:
+            exceedances = pd.DataFrame(
+                np.where(dataset > threshold_dataset, 0.0, np.abs(dataset.subtract(threshold_dataset, fill_value=0))),
+                index=dataset.index,
+                columns=dataset.columns,
+            )
+    elif isinstance(dataset, pd.Series) and isinstance(threshold_dataset, pd.Series):
+        if anomaly_type == "high":
+            exceedances = pd.Series(
+                np.maximum(dataset - threshold_dataset, 0.0), index=dataset.index, name="exceedances"
+            )
+        else:
+            exceedances = pd.Series(
+                np.where(dataset > threshold_dataset, 0.0, np.abs(dataset - threshold_dataset)),
+                index=dataset.index,
+                name="exceedances",
+            )
     else:
-        pot_exceedances = np.where(ts > pot_thresholds, 0.0, np.abs(ts - pot_thresholds))
+        raise TypeError(
+            "Invalid type! both `dataset` and `threshold_dataset` arguments must be of the same type: 2x Pandas DataFrame or 2x Pandas Series"
+        )
 
     logger.debug(f"successfully extracting exceedances from dynamic threshold for {anomaly_type} anomaly type")
 
-    return pd.Series(index=ts.index, data=pot_exceedances, name="exceedances")
+    return exceedances
 
 
-def get_anomaly_score(ts: pd.Series, t0: int, gpd_params: typing.Dict) -> pd.Series:
+def __gpd_fit_dataframe(
+    exceedance_dataset: pd.DataFrame, t1_t2_exceedances: pd.DataFrame, t0: int, gpd_params: typing.Dict
+) -> typing.Dict:
+    anomaly_scores: typing.Dict = {}
+
+    for column in exceedance_dataset.columns:
+        anomaly_scores[f"{column}_anomaly_score"] = []
+    anomaly_scores["total_anomaly_score"] = []
+
+    for row in range(0, t1_t2_exceedances.shape[0]):
+        fit_exceedances = exceedance_dataset.iloc[: t0 + row]  # type: ignore
+        future_exeedance = t1_t2_exceedances.iloc[[row]]
+        total_anomaly_score = 0.0
+        gpd_params[row] = {}
+
+        for column in t1_t2_exceedances.columns:
+            nonzero_fit_exceedances = fit_exceedances[column][fit_exceedances[column] > 0.0].to_list()
+            if future_exeedance[column].iloc[0] > 0:
+                if len(nonzero_fit_exceedances) > 0:
+                    (c, loc, scale) = stats.genpareto.fit(data=nonzero_fit_exceedances, floc=0)
+                    p_value: float = stats.genpareto.sf(x=future_exeedance[column].iloc[0], c=c, loc=loc, scale=scale)
+                    inverted_p_value = 1 / p_value if p_value > 0.0 else float("inf")
+                    total_anomaly_score += inverted_p_value
+                    gpd_params[row][column] = dict(
+                        c=c,
+                        loc=loc,
+                        scale=scale,
+                        p_value=p_value,
+                        anomaly_score=inverted_p_value,
+                    )
+                    anomaly_scores[f"{column}_anomaly_score"].append(inverted_p_value)
+                else:
+                    gpd_params[row][column] = dict(
+                        c=0.0,
+                        loc=0.0,
+                        scale=0.0,
+                        p_value=0.0,
+                        anomaly_score=0.0,
+                    )
+                    anomaly_scores[f"{column}_anomaly_score"].append(0.0)
+            else:
+                gpd_params[row][column] = dict(
+                    c=0.0,
+                    loc=0.0,
+                    scale=0.0,
+                    p_value=0.0,
+                    anomaly_score=0.0,
+                )
+                anomaly_scores[f"{column}_anomaly_score"].append(0.0)
+        gpd_params[row]["total_anomaly_score"] = total_anomaly_score
+        anomaly_scores["total_anomaly_score"].append(total_anomaly_score)
+    return anomaly_scores
+
+
+def __gpd_fit_series(
+    exceedance_dataset: pd.Series, t1_t2_exceedances: pd.Series, t0: int, gpd_params: typing.Dict
+) -> typing.List:
+    anomaly_scores: typing.List = []
+    for row in range(0, t1_t2_exceedances.shape[0]):
+        fit_exceedances = exceedance_dataset.iloc[: t0 + row]
+        future_exeedance = t1_t2_exceedances.iloc[row]
+        nonzero_fit_exceedances = fit_exceedances[fit_exceedances.values > 0.0]
+        if future_exeedance > 0:
+            if len(nonzero_fit_exceedances.values) > 0:
+                (c, loc, scale) = stats.genpareto.fit(data=nonzero_fit_exceedances.values, floc=0)
+                p_value = stats.genpareto.sf(x=future_exeedance, c=c, loc=loc, scale=scale)
+                inverted_p_value = 1 / p_value if p_value > 0.0 else float("inf")
+                gpd_params[row] = dict(
+                    index=t1_t2_exceedances.index[row],
+                    c=c,
+                    loc=loc,
+                    scale=scale,
+                    p_value=p_value,
+                    anomaly_score=inverted_p_value,
+                )
+                anomaly_scores.append(inverted_p_value)
+            else:
+                gpd_params[row] = dict(
+                    index=t1_t2_exceedances.index[row],
+                    c=0.0,
+                    loc=0.0,
+                    scale=0.0,
+                    p_value=0.0,
+                    anomaly_score=0.0,
+                )
+                anomaly_scores.append(0.0)
+        else:
+            gpd_params[row] = dict(
+                index=t1_t2_exceedances.index[row],
+                c=0.0,
+                loc=0.0,
+                scale=0.0,
+                p_value=0.0,
+                anomaly_score=0.0,
+            )
+            anomaly_scores.append(0.0)
+    return anomaly_scores
+
+
+def get_anomaly_score(
+    exceedance_dataset: typing.Union[pd.DataFrame, pd.Series], t0: int, gpd_params: typing.Dict
+) -> typing.Union[pd.DataFrame, pd.Series]:
     """
     Calculate the anomaly score for each data point in a time series based on the Generalized Pareto Distribution (GPD).
 
@@ -153,7 +271,7 @@ def get_anomaly_score(ts: pd.Series, t0: int, gpd_params: typing.Dict) -> pd.Ser
 
     ## Parameters
     -------------
-    ts : pandas.Series
+    exceedance_dataset : typing.Union[pd.DataFrame, pd.Series]
         The Pandas Series that contains the exceedances.
 
     t0 : int
@@ -164,7 +282,7 @@ def get_anomaly_score(ts: pd.Series, t0: int, gpd_params: typing.Dict) -> pd.Ser
 
     ## Returns
     ----------
-    pd.Series
+    anomaly_scores : typing.Union[pd.DataFrame, pd.Series]
         A Pandas Series with anomaly scores (inverted p-value) as its values.
 
     ## Example
@@ -205,60 +323,44 @@ def get_anomaly_score(ts: pd.Series, t0: int, gpd_params: typing.Dict) -> pd.Ser
     logger.debug(
         f"calculating anomaly score using t0={t0}, scipy.stats.genpareto.fit(), and scipy.stats.genpareto.sf()"
     )
+    if t0 is None or not isinstance(t0, int):
+        raise TypeError("Invalid type! `t0` must be a int")
+    if not isinstance(gpd_params, typing.Dict):
+        raise TypeError("Invalid type! The `gpd_params` argument must be a dictionary")
+    if not isinstance(exceedance_dataset, pd.DataFrame) and not isinstance(exceedance_dataset, pd.Series):
+        raise TypeError("Invalid type! The `exceedance_dataset` argument must be a Pandas DataFrame or Series")
 
-    if not isinstance(ts, pd.Series):
-        raise TypeError("Invalid value! The `ts` argument must be a Pandas Series")
-    if t0 is None:
-        raise ValueError("Invalid value! The `t0` argument must be an integer")
+    t1_t2_exceedances = exceedance_dataset.iloc[t0:]
 
-    anomaly_scores = []
-    t1_t2_exceedances = ts.iloc[t0:]
-
-    for row in range(0, t1_t2_exceedances.shape[0]):
-        fit_exceedances = ts.iloc[: t0 + row]
-        future_exeedance = t1_t2_exceedances.iloc[row]
-        nonzero_fit_exceedances = fit_exceedances[fit_exceedances.values > 0.0]
-        if future_exeedance > 0:
-            if len(nonzero_fit_exceedances.values) > 0:
-                (c, loc, scale) = stats.genpareto.fit(data=nonzero_fit_exceedances.values, floc=0)
-                p_value = stats.genpareto.sf(x=future_exeedance, c=c, loc=loc, scale=scale)
-                inverted_p_value = 1 / p_value if p_value > 0.0 else float("inf")
-                gpd_params[row] = dict(
-                    index=t1_t2_exceedances.index[row],
-                    c=c,
-                    loc=loc,
-                    scale=scale,
-                    p_value=p_value,
-                    anomaly_score=inverted_p_value,
-                )
-                anomaly_scores.append(inverted_p_value)
-            else:
-                gpd_params[row] = dict(
-                    index=t1_t2_exceedances.index[row],
-                    c=0.0,
-                    loc=0.0,
-                    scale=0.0,
-                    p_value=0.0,
-                    anomaly_score=0.0,
-                )
-                anomaly_scores.append(0.0)
-        else:
-            gpd_params[row] = dict(
-                index=t1_t2_exceedances.index[row],
-                c=0.0,
-                loc=0.0,
-                scale=0.0,
-                p_value=0.0,
-                anomaly_score=0.0,
-            )
-            anomaly_scores.append(0.0)
+    if isinstance(exceedance_dataset, pd.DataFrame):
+        anomaly_scores = pd.DataFrame(
+            data=__gpd_fit_dataframe(
+                exceedance_dataset=exceedance_dataset,
+                t1_t2_exceedances=t1_t2_exceedances,
+                t0=t0,
+                gpd_params=gpd_params,
+            ),
+        )
+    elif isinstance(exceedance_dataset, pd.Series):
+        anomaly_scores = pd.Series(
+            index=exceedance_dataset.index[t0:],
+            data=__gpd_fit_series(
+                exceedance_dataset=exceedance_dataset,
+                t1_t2_exceedances=t1_t2_exceedances,
+                t0=t0,
+                gpd_params=gpd_params,
+            ),
+            name="anomaly scores",
+        )
 
     logger.debug(f"successfully calculating anomaly score")
 
-    return pd.Series(index=ts.index[t0:], data=anomaly_scores, name="anomaly scores")
+    return anomaly_scores
 
 
-def get_anomaly_threshold(ts: pd.Series, t1: int, q: float = 0.90) -> float:
+def get_anomaly_threshold(
+    anomaly_score_dataset: typing.Union[pd.DataFrame, pd.Series], t1: int, q: float = 0.90
+) -> float:
     """
     Calculate a dynamic threshold based on quantiles used for comparing anomaly scores.
 
@@ -293,20 +395,40 @@ def get_anomaly_threshold(ts: pd.Series, t1: int, q: float = 0.90) -> float:
 
     logger.debug(f"calculating anomaly threshold using t1={t1}, q={q}, and `numpy.quantile()` function")
 
-    if not isinstance(ts, pd.Series):
-        raise TypeError("Invalid value! The `ts` argument must be a Pandas Series")
+    if t1 is None or not isinstance(t1, int):
+        raise TypeError("Invalid type! `t1` must be a int")
+    if q is None or not isinstance(q, float):
+        raise TypeError("Invalid type! `q` must be a float")
 
-    t1_anomaly_scores = ts[(ts.values > 0) & (ts.values != float("inf"))].iloc[:t1]
+    if isinstance(anomaly_score_dataset, pd.DataFrame):
+        t1_anomaly_scores = (
+            anomaly_score_dataset[  # type: ignore
+                (anomaly_score_dataset["total_anomaly_score"] > 0) & (anomaly_score_dataset["total_anomaly_score"] != float("inf"))  # type: ignore
+            ]
+            .iloc[:t1]["total_anomaly_score"]
+            .to_list()
+        )
+    elif isinstance(anomaly_score_dataset, pd.Series):
+        t1_anomaly_scores = (
+            anomaly_score_dataset[(anomaly_score_dataset.values > 0) & (anomaly_score_dataset.values != float("inf"))]
+            .iloc[:t1]
+            .values
+        )
+    else:
+        raise TypeError("Invalid type! The `anomaly_score_dataset` argument must be a Pandas DataFrame or Series")
+
+    if len(t1_anomaly_scores) == 0:
+        raise ValueError("There are no total anomaly scores per row > 0")
 
     logger.debug(f"successfully calculating anomaly threshold using {q} quantile")
 
     return np.quantile(
-        a=t1_anomaly_scores.values,
+        a=t1_anomaly_scores,
         q=q,
     )
 
 
-def get_anomaly(ts: pd.Series, t1: int, q: float = 0.90) -> pd.Series:
+def get_anomaly(anomaly_score_dataset: typing.Union[pd.DataFrame, pd.Series], threshold: float, t1: int) -> pd.Series:
     """
     Detect anomalous data points by comparing anomaly scores with the anomaly threshold.
 
@@ -345,16 +467,20 @@ def get_anomaly(ts: pd.Series, t1: int, q: float = 0.90) -> pd.Series:
         If the `ts` argument is not a Pandas Series.
     """
 
-    logger.debug(f"detecting anomaly using t1={t1}, q={q}, and `get_anoamly_threshold()` function")
+    logger.debug(f"detecting anomaly using t1={t1}, and `get_anoamly_threshold()` function")
 
-    if not isinstance(ts, pd.Series):
-        raise TypeError("Invalid value! The `ts` argument must be a Pandas Series")
+    if not isinstance(anomaly_score_dataset, pd.DataFrame) and not isinstance(anomaly_score_dataset, pd.Series):
+        raise TypeError("Invalid type! `anomaly_score_dataset` must be a Pandas DataFrame or Series")
+    if threshold is None or not isinstance(threshold, float):
+        raise TypeError("Invalid type! `threshold` must be a float")
 
-    anomaly_threshold = get_anomaly_threshold(ts=ts, t1=t1, q=q)
-    t2_anomaly_scores = ts.iloc[t1:]
-    anomalies = t2_anomaly_scores > anomaly_threshold
+    t2_anomaly_scores = anomaly_score_dataset.iloc[t1:].copy()
 
-    logger.debug(
-        f"successfully detecting {len(anomalies[anomalies.values == True].values)} anomalies using anomaly_threshold={anomaly_threshold}"
-    )
-    return pd.Series(index=t2_anomaly_scores.index, data=anomalies.values, name="anomalies")
+    if isinstance(anomaly_score_dataset, pd.DataFrame):
+        detected_data = t2_anomaly_scores["total_anomaly_score"].apply(lambda x: x > threshold).to_list()
+    elif isinstance(anomaly_score_dataset, pd.Series):
+        detected_data = (t2_anomaly_scores > threshold).values
+
+    logger.debug(f"successfully detecting anomalies using anomaly_threshold={threshold}")
+
+    return pd.Series(index=t2_anomaly_scores.index, data=detected_data, name="detected data")

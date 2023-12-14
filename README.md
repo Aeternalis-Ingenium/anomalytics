@@ -75,7 +75,11 @@ $ pip3 install "anomalytics[codequality,docs,security,testcov,extra]"
 
 ## Use Case
 
-`anomalytics` can be used to analyze anomalies in your dataset (both as `pandas.DataFrame` or `pandas.Series`). To start, let's follow along with this minimum example where we want to detect extremely high anomalies in our time series dataset.
+`anomalytics` can be used to analyze anomalies in your dataset (both as `pandas.DataFrame` or `pandas.Series`). To start, let's follow along with this minimum example where we want to detect extremely high anomalies in our dataset.
+
+Read the walkthrough below, or the concrete examples here:
+* [Extreme Anomaly Analysis - DataFrame](docs/examples/extreme_anomaly_df_analysis.ipynb)
+* [Battery Water Level Analysis - Time Series](docs/examples/battery_water_level_analysis.ipynb)
 
 ### Anomaly Detection via the `Detector` Instance
 
@@ -84,16 +88,17 @@ $ pip3 install "anomalytics[codequality,docs,security,testcov,extra]"
     ```python
     import anomalytics as atics
 
-    ts = atics.read_ts("./water_level.csv", "csv")
-    ts.head()
+    df = atics.read_ts("./ad_impressions.csv", "csv")
+    df.head()
     ```
     ```shell
-    2008-11-03 06:00:00    0.219
-    2008-11-03 07:00:00   -0.041
-    2008-11-03 08:00:00   -0.282
-    2008-11-03 09:00:00   -0.368
-    2008-11-03 10:00:00   -0.400
-    Name: Water Level, dtype: float64
+
+                   datetime	    xandr	      gam	    adobe
+    0	2023-10-18 09:01:00	52.483571	71.021131	35.681915
+    1	2023-10-18 09:02:00	49.308678	73.651996	60.347246
+    2	2023-10-18 09:03:00	53.238443	65.690813	48.120805
+    3	2023-10-18 09:04:00	57.615149	80.944393	59.550775
+    4	2023-10-18 09:05:00	48.829233	76.445099	26.710413
     ```
 
 2. Initialize the needed detector object. Each detector utilises a different statistical method for detecting anomalies. In this example, we'll use POT method and a high anomaly type. Pay attention to the time period that is directly created where the `t2` is 1 by default because "real-time" always targets the "now" period hence 1 (sec, min, hour, day, week, month, etc.):
@@ -104,12 +109,16 @@ $ pip3 install "anomalytics[codequality,docs,security,testcov,extra]"
     print(f"T0: {pot_detector.t0}")
     print(f"T1: {pot_detector.t1}")
     print(f"T2: {pot_detector.t2}")
+
+    pot_detector.plot(ptype="line-dataset-df", title=f"Page Impressions Dataset", xlabel="Minute", ylabel="Impressions", alpha=1.0)
     ```
     ```shell
-    T0: 70001
-    T1: 30000
-    T2: 1
+    T0: 42705
+    T1: 16425
+    T2: 6570
     ```
+
+    ![Ad Impressions Dataset](docs/assets/readme/01-AdImpressionDatasetDistributions.png)
 
 3. The purpose of using the detector object instead the standalone is to have a simple fix detection flow. In case you want to customize the time window, we can call the `reset_time_window()` to reset `t2` value, even though that will beat the purpose of using a detector object. Pay attention to the period parameters because the method expects a percentage representation of the distribution of period (ranging 0.0 to 1.0):
 
@@ -124,6 +133,8 @@ $ pip3 install "anomalytics[codequality,docs,security,testcov,extra]"
     print(f"T0: {pot_detector.t0}")
     print(f"T1: {pot_detector.t1}")
     print(f"T2: {pot_detector.t2}")
+
+    pot_detector.plot(ptype="hist-dataset-df", title="Dataset Distributions", xlabel="Distributions", ylabel="Page Impressions", alpha=1.0, bins=100)
     ```
     ```shell
     T0: 65001
@@ -131,133 +142,167 @@ $ pip3 install "anomalytics[codequality,docs,security,testcov,extra]"
     T2: 10000
     ```
 
-4. Let's extract exceedances by giving the expected `q`uantile:
+    ![Ad Impressions Hist](docs/assets/readme/02-AdImpressionsNormDistributions.png)
+
+4. Now, we can extract exceedances by giving the expected `q`uantile:
 
     ```python
     pot_detector.get_extremes(0.95)
-    pot_detector.exeedances.head()
+    pot_detector.exeedance_thresholds.head()
     ```
     ```shell
-    2008-11-03 06:00:00    0.859
-    2008-11-03 07:00:00    0.859
-    2008-11-03 08:00:00    0.859
-    2008-11-03 09:00:00    0.859
-    2008-11-03 10:00:00    0.859
-    Name: Water Level, dtype: float64
+
+            xandr	      gam	    adobe	           datetime
+    0	58.224653	85.177029	60.362306	2023-10-18 09:01:00
+    1	58.224653	85.177029	60.362306	2023-10-18 09:02:00
+    2	58.224653	85.177029	60.362306	2023-10-18 09:03:00
+    3	58.224653	85.177029	60.362306	2023-10-18 09:04:00
+    4	58.224653	85.177029	60.362306	2023-10-18 09:05:00
     ```
 
 5. Let's visualize the exceedances and its threshold to have a clearer understanding of our dataset:
 
     ```python
-    pot_detector.plot(plot_type="l+eth", title=f"Peaks Over Threshold", xlabel="Hourly", ylabel="Water Level", alpha=1.0)
+    pot_detector.plot(ptype="line-exceedance-df", title="Peaks Over Threshold", xlabel="Minute", ylabel="Page Impressions", alpha=1.0)
     ```
 
-    ![Exceedance-POT](docs/assets/PeaksOverThreshold.png)
+    ![Exceedance-POT](docs/assets/readme/03-AdImpressionsExceedances.png)
 
-6. Fit our data into the chosen distribution, in this case the "Generalized Pareto Distribution". The first couple rows will be zeroes which is normal because we only fit data that are greater than zero into the wanted distribution:
+6. Now that we have the exceedances, we can fit our data into the chosen distribution, in this example the "Generalized Pareto Distribution". The first couple rows will be zeroes which is normal because we only fit data that are greater than zero into the wanted distribution:
 
     ```python
     pot_detector.fit()
     pot_detector.fit_result.head()
     ```
     ```shell
-    2016-04-03 15:00:00    0.0
-    2016-04-03 16:00:00    0.0
-    2016-04-03 17:00:00    0.0
-    2016-04-03 18:00:00    0.0
-    2016-04-03 19:00:00    0.0
-    Name: anomaly scores, dtype: float64
+        xandr_anomaly_score gam_anomaly_score   adobe_anomaly_score	total_anomaly_score	           datetime
+    0	           1.087147	         0.000000              0.000000	           1.087147	2023-11-17 00:46:00
+    1	           0.000000	         0.000000              0.000000	           0.000000	2023-11-17 00:47:00
+    2	           0.000000	         0.000000              0.000000	           0.000000	2023-11-17 00:48:00
+    3	           0.000000	         1.815875              0.000000	           1.815875	2023-11-17 00:49:00
+    4	           0.000000	         0.000000              0.000000	           0.000000	2023-11-17 00:50:00
     ...
     ```
 
-7. The parameters are stored inside the detector class:
+7. Let's inspect the GPD distributions to get the intuition of our pareto distribution:
+
+    ```python
+    pot_detector.plot(ptype="hist-gpd-df", title="GPD - PDF", xlabel="Page Impressions", ylabel="Density", alpha=1.0, bins=100)
+    ```
+
+    ![GPD-PDF](docs/assets/readme/04-AdImpressionsGPDPDF.png)
+
+8. The parameters are stored inside the detector class:
 
     ```python
     pot_detector.params
     ```
     ```shell
-    {0: {'index': Timestamp('2016-04-03 15:00:00'),
-    'c': 0.0,
+    {0: {'xandr': {'c': -0.11675297447288158,
+    'loc': 0,
+    'scale': 2.3129766056305603,
+    'p_value': 0.9198385927065513,
+    'anomaly_score': 1.0871472537998},
+    'gam': {'c': 0.0,
     'loc': 0.0,
     'scale': 0.0,
     'p_value': 0.0,
     'anomaly_score': 0.0},
-    1: {'index': Timestamp('2016-04-03 16:00:00'),
+    'adobe': {'c': 0.0,
+    'loc': 0.0,
+    'scale': 0.0,
+    'p_value': 0.0,
+    'anomaly_score': 0.0},
+    'total_anomaly_score': 1.0871472537998},
+    1: {'xandr': {'c': 0.0,
+    'loc': 0.0,
+    'scale': 0.0,
+    'p_value': 0.0,
+    'anomaly_score': 0.0},
+    'gam': {'c': 0.0,
+    'loc': 0.0,
+    'scale': 0.0,
+    'p_value': 0.0,
     ...
-    'c': 0.0,
-    'loc': 0.0,
     'scale': 0.0,
     'p_value': 0.0,
     'anomaly_score': 0.0},
+    'total_anomaly_score': 0.0},
     ...}
     ```
 
-8. Last but not least, we can now detect the extremely high anomalies:
+9.  Last but not least, we can now detect the extremely large (high) anomalies:
 
     ```python
-    pot_detector.detect(0.90)
-    pot_detector.detection_result.head()
+    pot_detector.detect(0.95)
+    pot_detector.detection_result
     ```
     ```shell
-    2020-03-31 19:00:00    False
-    2020-03-31 20:00:00    False
-    2020-03-31 21:00:00    False
-    2020-03-31 22:00:00    False
-    2020-03-31 23:00:00    False
-    Name: anomalies, dtype: bool
+    16425    False
+    16426    False
+    16427    False
+    16428    False
+    16429    False
+            ...
+    22990    False
+    22991    False
+    22992    False
+    22993    False
+    22994    False
+    Name: detected data, Length: 6570, dtype: bool
     ```
 
-9. Let's we can visualize the PDF of our GPD parameters:
+
+10. Now we can visualize the anomaly scores from the fitting with the anomaly threshold to get the sense of the extremely large values:
 
     ```python
-    pot_detector.plot(plot_type="gpd+ov", title="PDF of GPD", xlabel="95-Quantile of Water Level", ylabel="Density", bins=200, alpha=1.0)
+    pot_detector.plot(ptype="line-anomaly-score-df", title="Anomaly Score", xlabel="Minute", ylabel="Page Impressions", alpha=1.0)
     ```
 
-    ![PDF-GPD](docs/assets/PDFGPD.png)
+    ![Anomaly Scores](docs/assets/readme/05-AdImpressionsAnomalyScore.png)
 
-10. To ensure the performance of our detection, let's inspect the summarized detection result:
-
-    ```python
-    pot_detector.detection_summary
-    ```
-    ```python
-            row	            datetime    anomalous_data	anomaly_score	anomaly_threshold
-    0	  90981	2019-03-22 02:00:00	             1.342	    28.333367	        15.110118
-    1	  91652	2019-04-19 01:00:00	             1.255	    15.603072	        15.110118
-    2	  95849	2019-10-10 22:00:00	             1.319      24.615872	        15.110118
-    3	  95850	2019-10-10 23:00:00	             1.417      48.738588	        15.110118
-    4	  95851	2019-10-11 00:00:00	             1.391      40.553093	        15.110118
-    ```
-11. We can also visualize the detection result:
+11. Now what? Well, while the detection process seems quite straight forward, in most cases getting the details of each anomalous data is quite tidious! That's why `anomalytics` provides a comfortable method to get the summary of the detection so we can see when, in which row, and how the actual anomalous data look like:
 
     ```python
-    pot_detector.plot(plot_type="l+ath", title=f"Detection Result", xlabel="Hourly", ylabel="Anomaly Score", alpha=1.0)
-    ```
-
-    ![Detection-Result](docs/assets/DetectionResult.png)
-
-12. Lastly, in every good analysis there is a test! We can evaluate our analysis result with "Kolmogorov Smirnov" 1 sample test to see how far the statistical distance between the observed sample distributions to the theoretical distributions via the fitting parameters (the smaller the `stats_distance` the better!):
-
-    ```python
-    pot_detector.evaluate("ks")
-    pot_detector.evaluation_result.head()
+    pot_detector.detection_summary.head(5)
     ```
     ```shell
-        total_nonzero_exceedances	stats_distance	p_value	       c    loc     scale
-    0	                     5028	        0.0284	 0.8987 0.003566	  0	 0.140657
+                              row	    xandr	      gam	    adobe	xandr_anomaly_score	gam_anomaly_score	adobe_anomaly_score	total_anomaly_score	anomaly_threshold
+    2023-11-28 12:06:00	    59225	64.117135	76.425925	47.772929	          21.445759	        0.000000	          0.000000	          21.445759	        19.689885
+    2023-11-28 12:25:00	    59244	40.513415	94.526021	65.921644	          0.000000	        19.557962	          2.685337	          22.243299	        19.689885
+    2023-11-28 12:45:00	    59264	52.362039	54.191719	79.972860	          0.000000	        0.000000	          72.313273	          72.313273	        19.689885
+    2023-11-28 16:48:00	    59507	64.753203	70.344142	42.540168	          32.543021	        0.000000	          0.000000	          32.543021	        19.689885
+    2023-11-28 16:53:00	    59512	35.912221	52.572939	75.621003	          0.000000	        0.000000	          22.199505	          22.199505	        19.689885
     ```
 
-13. When 1 test is not enough for evaluation, we can also visually test our analysis result with "Quantile-Quantile Plot" method to observed the sample quantile vs. the theoretical quantile:
+12. In every good analysis there is a test! We can evaluate our analysis result with "Kolmogorov Smirnov" 1 sample test to see how far the statistical distance between the observed sample distributions to the theoretical distributions via the fitting parameters (the smaller the `stats_distance` the better!):
 
     ```python
-    pot_detector.evaluate("qq")
+    pot_detector.evaluate(method="ks")
+    pot_detector.evaluation_result
+    ```
+    ```shell
+        column	total_nonzero_exceedances	stats_distance	p_value	        c	loc	    scale
+    0	 xandr	                     3311	      0.012901	0.635246 -0.128561	  0	 2.329005
+    1	 gam	                     3279	      0.011006	0.817674 -0.140479	  0	 3.852574
+    2	 adobe	                     3298	      0.019479	0.161510 -0.133019	  0	 6.007833
     ```
 
-    ![QQ-Plot GPD](docs/assets/QQPlot.png)
+13. If 1 test is not enough for evaluation, we can also visually test our analysis result with "Quantile-Quantile Plot" method to observed the sample quantile vs. the theoretical quantile:
+
+    ```python
+    # Use the last non-zero parameters
+    pot_detector.evaluate(method="qq")
+
+    # Use a random non-zero parameters
+    pot_detector.evaluate(method="qq", is_random=True)
+    ```
+
+    ![QQ-Plot GPD](docs/assets/readme/06-AdImpressionsQQPlot.png)
 
 ### Anomaly Detection via Standalone Functions
 
-`anomalytics` provies a standalone functions as well in case users want to start the anomaly analysis from a different starting points. It is more flexible, but less guided.
+You have a project that only needs to be fitted? To be detected? Don't worry! `anomalytics` also provides standalone functions as well in case users want to start the anomaly analysis from a different starting points. It is more flexible, but many processing needs to be done by you. LEt's take an example with a different dataset, thistime the water level Time Series!
 
 1. Import `anomalytics` and initialise your time series:
 
@@ -303,7 +348,13 @@ $ pip3 install "anomalytics[codequality,docs,security,testcov,extra]"
 3. Extract exceedances and indicate that it is a `"high"` anomaly type and what's the `q`uantile:
 
     ```python
-    exceedances = atics.get_exceedance_peaks_over_threshold(ts=ts, t0=t0, anomaly_type="high", q=0.95)
+    pot_thresholds = get_threshold_peaks_over_threshold(dataset=ts, t0=t0, "high", q=0.90)
+    pot_exceedances = atics.get_exceedance_peaks_over_threshold(
+        dataset=ts,
+        threshold_dataset=pot_thresholds,
+        anomaly_type="high"
+    )
+
     exceedances.head()
     ```
     ```shell
@@ -315,11 +366,16 @@ $ pip3 install "anomalytics[codequality,docs,security,testcov,extra]"
     Name: Water Level, dtype: float64
     ```
 
-4. Compute the anomaly score for each exceedance and initialize a params for further analysis and evaluation:
+4. Compute the anomaly scores for each exceedance and initialize a params for further analysis and evaluation:
 
     ```python
     params = {}
-    anomaly_scores = atics.get_anomaly_score(ts=exceedance_ts, t0=t0, gpd_params=params)
+    anomaly_scores = atics.get_anomaly_score(
+        exceedance_dataset=pot_exceedances,
+        t0=t0,
+        gpd_params=params
+    )
+
     anomaly_scores.head()
     ```
     ```shell
@@ -354,10 +410,20 @@ $ pip3 install "anomalytics[codequality,docs,security,testcov,extra]"
     ...}
     ```
 
-6. Detect the extremely high anomalies:
+6. Detect anomalies:
 
     ```python
-    detection_result = get_anomaly(ts=anomaly_scores, t1=t1, q=0.95)
+    anomaly_threshold = get_anomaly_threshold(
+        anomaly_score_dataset=anomaly_scores,
+        t1=t1,
+        q=0.90
+    )
+    detection_result = get_anomaly(
+        anomaly_score_dataset=anomaly_scores,
+        threshold=anomaly_threshold,
+        t1=t1
+    )
+
     detection_result.head()
     ```
     ```shell
@@ -369,20 +435,9 @@ $ pip3 install "anomalytics[codequality,docs,security,testcov,extra]"
     Name: anomalies, dtype: bool
     ```
 
-7. Evaluate the analysis result with "Kolmogorov Smirnov" 1 sample test:
+7. For the test, kolmogorov-smirnov and qq plot are also accessible via standalone functions, but the params need to be processed so it only contains a non-zero parameters since there are no reasons to calculate a zero 😂
 
     ```python
-    ks_result = atics.evals.ks_1sample(ts=exceedance, stats_method="POT", fit_params=params)
-    ks_result
-    ```
-    ```shell
-    {'total_nonzero_exceedances': 5028, 'stats_distance': 0.0284, 'p_value': 0.8987, 'c': 0.003566, 'loc': 0, 'scale': 0.140657}
-    ```
-
-8. Evaluate the analysis for the second time using "QQ-Plot", but this time we need to process the exceedances and params ourselves so they don't contain zeroes:
-
-    ```python
-    nonzero_exceedances = exceedances[exceedances.values > 0]
     nonzero_params = []
 
     for row in range(0, t1 + t2):
@@ -393,8 +448,25 @@ $ pip3 install "anomalytics[codequality,docs,security,testcov,extra]"
         ):
             nonzero_params.append(params[row])
 
+    ks_result = atics.evals.ks_1sample(
+        dataset=pot_exceedances,
+        stats_method="POT",
+        fit_params=nonzero_params
+    )
+
+    ks_result
+    ```
+    ```shell
+    {'total_nonzero_exceedances': [5028], 'stats_distance': [0.0284] 'p_value': [0.8987], 'c': [0.003566], 'loc': [0], 'scale': [0.140657]}
+    ```
+
+8. Visualize via qq plot:
+
+    ```python
+    nonzero_exceedances = exceedances[exceedances.values > 0]
+
     visualize_qq_plot(
-        ts=nonzero_exceedances,
+        dataset=nonzero_exceedances,
         stats_method="POT",
         fit_params=nonzero_params,
     )
@@ -420,7 +492,7 @@ We have anomaly you said? Don't worry, `anomalytics` has the implementation to s
     # Slack
     slack = atics.get_notification(
         platform="slack",
-        webhook_url="https://slack.com/my-slack/1234567890/09876543/213647890",
+        webhook_url="https://slack.com/my-slack/YOUR/SLACK/WEBHOOK",
     )
 
     print(gmail)
@@ -431,54 +503,44 @@ We have anomaly you said? Don't worry, `anomalytics` has the implementation to s
     'Slack Notification'
     ```
 
-2. Prepare the data for the notification. For the standalone analysis, please use exatly the same column names (keys in `data`)!
+2. Prepare the data for the notification! If you use standalone, you need to process the `detection_result` to become a DataFrame with `row`, ``
 
     ```python
     # Standalone
-    detected_anomalies = detected_data[detected_data.values == True]
+    detected_anomalies = detection_result[detection_result.values == True]
     anomalous_data = ts[detected_anomalies.index]
-    data = dict(
-        row=[ts.index.get_loc(index) + 1 for index in anomalous.index],
-        datetime=[index for index in anomalous.index],
-        anomalous_data=[data for data in anomalous.values],
-        anomaly_score=[score for score in anomaly_score[anomalous.index].values],
-        anomaly_threshold=[anomaly_threshold] * anomalous.shape[0],
+    standalone_detection_summary = pd.DataFrame(
+        index=anomalous.index.flatten(),
+        data=dict(
+            row=[ts.index.get_loc(index) + 1 for index in anomalous.index],
+            anomalous_data=[data for data in anomalous.values],
+            anomaly_score=[score for score in anomaly_score[anomalous.index].values],
+            anomaly_threshold=[anomaly_threshold] * anomalous.shape[0],
+        )
     )
-    detection_summary = pd.DataFrame(data=data)
-
 
     # Detector Instance
-    detection_summary = pot_detector.detection_summary
+    detector_detection_summary = pot_detector.detection_summary
 
-    # Both ways provide the exact same result! Trust me it's tested 😋
-    detection_summary
-    ```
-    ```shell
-            row	            datetime    anomalous_data	anomaly_score	anomaly_threshold
-    0	  90981	2019-03-22 02:00:00	             1.342	    28.333367	        15.110118
-    1	  91652	2019-04-19 01:00:00	             1.255	    15.603072	        15.110118
-    2	  95849	2019-10-10 22:00:00	             1.319      24.615872	        15.110118
-    3	  95850	2019-10-10 23:00:00	             1.417      48.738588	        15.110118
-    4	  95851	2019-10-11 00:00:00	             1.391      40.553093	        15.110118
     ```
 
-3. Prepare the notification payload and a custome message if needed:
+1. Prepare the notification payload and a custome message if needed:
 
     ```python
     # Email
     gmail.setup(
-        detection_summary,
-        "Attention, detected anomaly from dataset Water Level:"
+        detection_summary=detection_summary,
+        message="Extremely large anomaly detected! From Ad Impressions Dataset!"
     )
 
     # Slack
     slack.setup(
-        detection_summary,
-        "Attention, detected anomaly from dataset Water Level:"
+        detection_summary=detection_summary,
+        message="Extremely large anomaly detected! From Ad Impressions Dataset!"
     )
     ```
 
-4. Send your notification! Beware that the scheduling is not implemented since it always depends on the logic of the use case:
+2. Send your notification! Beware that the scheduling is not implemented since it always depends on the logic of the use case:
 
     ```python
     # Email
@@ -488,28 +550,9 @@ We have anomaly you said? Don't worry, `anomalytics` has the implementation to s
     slack.send
     ```
 
-5. Check your email or slack, this example produces the following notification:
+3. Check your email or slack, this example produces the following notification via Slack:
 
-* Email
-
-    > 🤖 Anomalytics - Anomaly Detected!
-    > ...
-    >
-    > Attention, detected anomaly from dataset Water Level:
-    >
-    >
-    > Row: 95851 | Date: 2019-10-11 00:00:00 | Anomalous Data: 1.391 | Anomaly Score: 40.553093 | Anomaly Threshold: 15.110118
-    > ...
-
-* Slack Channel
-
-    > 🤖 Anomalytics - Anomaly Detected!
-    >
-    >
-    > Attention, detected anomaly from dataset Water Level:
-    >
-    >
-    > Row: 95851 | Date: 2019-10-11 00:00:00 | Anomalous Data: 1.391 | Anomaly Score: 40.553093 | Anomaly Threshold: 15.110118
+    ![Anomaly SLack Notification](docs/assets/readme/07-AdImpressionsNotification.jpeg)
 
 # Reference
 

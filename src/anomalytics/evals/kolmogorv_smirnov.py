@@ -1,3 +1,4 @@
+import datetime
 import logging
 import typing
 
@@ -7,8 +8,96 @@ import scipy.stats as stats
 logger = logging.getLogger(__name__)
 
 
+@typing.overload
 def ks_1sample(
-    ts: pd.Series,
+    dataset: typing.Union[pd.DataFrame, pd.Series],
+    stats_method: typing.Literal["AE"],
+    fit_params: typing.List[
+        typing.Dict[str, typing.Union[typing.List[typing.Dict[str, float]], datetime.datetime, float]]
+    ],
+) -> typing.Dict[str, typing.Union[typing.List[str], typing.List[float], typing.List[int]]]:
+    ...
+
+
+@typing.overload
+def ks_1sample(
+    dataset: typing.Union[pd.DataFrame, pd.Series],
+    stats_method: typing.Literal["BM"],
+    fit_params: typing.List[
+        typing.Dict[str, typing.Union[typing.List[typing.Dict[str, float]], datetime.datetime, float]]
+    ],
+) -> typing.Dict[str, typing.Union[typing.List[str], typing.List[float], typing.List[int]]]:
+    ...
+
+
+@typing.overload
+def ks_1sample(
+    dataset: typing.Union[pd.DataFrame, pd.Series],
+    stats_method: typing.Literal["DBSCAN"],
+    fit_params: typing.List[
+        typing.Dict[str, typing.Union[typing.List[typing.Dict[str, float]], datetime.datetime, float]]
+    ],
+) -> typing.Dict[str, typing.Union[typing.List[str], typing.List[float], typing.List[int]]]:
+    ...
+
+
+@typing.overload
+def ks_1sample(
+    dataset: typing.Union[pd.DataFrame, pd.Series],
+    stats_method: typing.Literal["ISOF",],
+    fit_params: typing.List[
+        typing.Dict[str, typing.Union[typing.List[typing.Dict[str, float]], datetime.datetime, float]]
+    ],
+) -> typing.Dict[str, typing.Union[typing.List[str], typing.List[float], typing.List[int]]]:
+    ...
+
+
+@typing.overload
+def ks_1sample(
+    dataset: typing.Union[pd.DataFrame, pd.Series],
+    stats_method: typing.Literal["MAD"],
+    fit_params: typing.List[
+        typing.Dict[str, typing.Union[typing.List[typing.Dict[str, float]], datetime.datetime, float]]
+    ],
+) -> typing.Dict[str, typing.Union[typing.List[str], typing.List[float], typing.List[int]]]:
+    ...
+
+
+@typing.overload
+def ks_1sample(
+    dataset: typing.Union[pd.DataFrame, pd.Series],
+    stats_method: typing.Literal["POT"],
+    fit_params: typing.List[
+        typing.Dict[str, typing.Union[typing.List[typing.Dict[str, float]], datetime.datetime, float]]
+    ],
+) -> typing.Dict[str, typing.Union[typing.List[str], typing.List[float], typing.List[int]]]:
+    ...
+
+
+@typing.overload
+def ks_1sample(
+    dataset: typing.Union[pd.DataFrame, pd.Series],
+    stats_method: typing.Literal["ZSCORE",],
+    fit_params: typing.List[
+        typing.Dict[str, typing.Union[typing.List[typing.Dict[str, float]], datetime.datetime, float]]
+    ],
+) -> typing.Dict[str, typing.Union[typing.List[str], typing.List[float], typing.List[int]]]:
+    ...
+
+
+@typing.overload
+def ks_1sample(
+    dataset: typing.Union[pd.DataFrame, pd.Series],
+    stats_method: typing.Literal["1CSVM",],
+    fit_params: typing.List[
+        typing.Dict[str, typing.Union[typing.List[typing.Dict[str, float]], datetime.datetime, float]]
+    ],
+) -> typing.Dict[str, typing.Union[typing.List[str], typing.List[float], typing.List[int]]]:
+    ...
+
+
+def ks_1sample(
+    dataset: typing.Union[pd.DataFrame, pd.Series],
     stats_method: typing.Literal[
         "AE",
         "BM",
@@ -19,8 +108,10 @@ def ks_1sample(
         "ZSCORE",
         "1CSVM",
     ],
-    fit_params: typing.Union[typing.List, typing.Dict],
-) -> typing.Dict:
+    fit_params: typing.List[
+        typing.Dict[str, typing.Union[typing.List[typing.Dict[str, float]], datetime.datetime, float]]
+    ],
+) -> typing.Dict[str, typing.Union[typing.List[str], typing.List[float], typing.List[int]]]:
     """
     Evaluate sample and the theoretical distribution using Kolmogorov Smirnov method via `scipy.stats.ks:_1samp()`.
 
@@ -49,59 +140,138 @@ def ks_1sample(
     """
     logger.debug(f"performing kolmogorov smirnov test for stats_method={stats_method} with fit_params={fit_params}")
 
-    if not isinstance(ts, pd.Series):
-        raise TypeError("Invalid value! The `ts` argument must be a Pandas Series")
-    if not isinstance(ts.index, pd.DatetimeIndex):
-        try:
-            datetime_index = pd.to_datetime(ts.index.values, utc=True)
-            ts.index = datetime_index
-        except Exception as err:
-            raise SyntaxError("Syntax error! Fail to convert `ts.index` into pandas.DatetimeIndex.") from err
+    if not isinstance(dataset, pd.DataFrame) and not isinstance(dataset, pd.Series):
+        raise TypeError("Invalid value! The `dataset` argument must be a Pandas DataFrame or Series")
+    if not isinstance(fit_params, typing.List):
+        raise TypeError("Invalid type! `fit_params` must be a list")
 
     if stats_method == "AE":
-        raise NotImplementedError()
+        if isinstance(dataset, pd.DataFrame):
+            raise NotImplementedError()
+
+        if isinstance(dataset, pd.Series):
+            raise NotImplementedError()
 
     if stats_method == "BM":
-        raise NotImplementedError()
+        if isinstance(dataset, pd.DataFrame):
+            raise NotImplementedError()
+
+        if isinstance(dataset, pd.Series):
+            raise NotImplementedError()
 
     if stats_method == "DBSCAN":
-        raise NotImplementedError()
+        if isinstance(dataset, pd.DataFrame):
+            raise NotImplementedError()
+
+        if isinstance(dataset, pd.Series):
+            raise NotImplementedError()
 
     if stats_method == "ISOF":
-        raise NotImplementedError()
+        if isinstance(dataset, pd.DataFrame):
+            raise NotImplementedError()
+
+        if isinstance(dataset, pd.Series):
+            raise NotImplementedError()
 
     if stats_method == "MAD":
-        raise NotImplementedError()
+        if isinstance(dataset, pd.DataFrame):
+            raise NotImplementedError()
+
+        if isinstance(dataset, pd.Series):
+            raise NotImplementedError()
 
     if stats_method == "POT":
-        c = fit_params[-1]["c"]
-        loc = fit_params[-1]["loc"]
-        scale = fit_params[-1]["scale"]
-        ks_result = stats.ks_1samp(
-            x=ts[ts.values > 0],
-            cdf=stats.genpareto.cdf,
-            args=(c, loc, scale),
-            alternative="two-sided",
-            method="exact",
-        )
+        if isinstance(dataset, pd.DataFrame):
+            nonzero_exceedance_series = [dataset[dataset[column] > 0][column].copy() for column in dataset.columns]
+            kstest_results: typing.Dict = {}
 
-        logger.debug(
-            f"successfully performing kolmogorov smirnov test for {stats_method} stats method with result of  {ks_result.statistic} `stats_distance`"
-        )
+            for index, column in enumerate(dataset.columns):  # type: ignore
+                kstest_results[column] = {}
+                ks_result = stats.ks_1samp(
+                    x=nonzero_exceedance_series[index],
+                    cdf=stats.genpareto.cdf,
+                    args=(
+                        fit_params[index][column][-1]["c"],  # type: ignore
+                        fit_params[index][column][-1]["loc"],  # type: ignore
+                        fit_params[index][column][-1]["scale"],  # type: ignore
+                    ),
+                )
+                kstest_results[column]["total_exceedances"] = nonzero_exceedance_series[index].shape[0]  # type: ignore
+                kstest_results[column]["stat_distance"] = ks_result.statistic  # type: ignore
+                kstest_results[column]["p_value"] = ks_result.pvalue  # type: ignore
+                kstest_results[column]["c"] = fit_params[index][column][-1]["c"]  # type: ignore
+                kstest_results[column]["loc"] = fit_params[index][column][-1]["loc"]  # type: ignore
+                kstest_results[column]["scale"] = fit_params[index][column][-1]["scale"]  # type: ignore
 
-        return dict(
-            total_nonzero_exceedances=[ts.shape[0]],
-            stats_distance=[ks_result.statistic],
-            p_value=[ks_result.pvalue],
-            c=[c],
-            loc=[loc],
-            scale=[scale],
-        )
+            columns: typing.List = []
+            total_nonzero_exceedances: typing.List = []
+            stats_distances: typing.List = []
+            p_values: typing.List = []
+            cs: typing.List = []
+            locs: typing.List = []
+            scales: typing.List = []
+
+            for column in kstest_results.keys():
+                columns.append(column)
+                total_nonzero_exceedances.append(kstest_results[column]["total_exceedances"])
+                stats_distances.append(kstest_results[column]["stat_distance"])
+                p_values.append(kstest_results[column]["p_value"])
+                cs.append(kstest_results[column]["c"])
+                locs.append(kstest_results[column]["loc"])
+                scales.append(kstest_results[column]["scale"])
+
+            return dict(
+                column=columns,
+                total_nonzero_exceedances=total_nonzero_exceedances,
+                stats_distance=stats_distances,
+                p_value=p_values,
+                c=cs,
+                loc=locs,
+                scale=scales,
+            )
+
+        if isinstance(dataset, pd.Series):
+            c: float = fit_params[-1]["c"]  # type: ignore
+            loc: float = fit_params[-1]["loc"]  # type: ignore
+            scale: float = fit_params[-1]["scale"]  # type: ignore
+            ks_result = stats.ks_1samp(
+                x=dataset[dataset.values > 0],
+                cdf=stats.genpareto.cdf,
+                args=(c, loc, scale),
+                alternative="two-sided",
+                method="exact",
+            )
+
+            logger.debug(
+                f"successfully performing kolmogorov smirnov test for {stats_method} stats method with result of  {ks_result.statistic} `stats_distance`"
+            )
+
+            total_nonzero_exceedances: typing.List[int] = [dataset.shape[0]]  # type: ignore
+            stats_distances: typing.List[float] = [ks_result.statistic]  # type: ignore
+            p_values: typing.List[float] = [ks_result.pvalue]  # type: ignore
+
+            return dict(
+                total_nonzero_exceedances=total_nonzero_exceedances,
+                stats_distance=stats_distances,
+                p_value=p_values,
+                c=[c],
+                loc=[loc],
+                scale=[scale],
+            )
+
     if stats_method == "ZS":
-        raise NotImplementedError()
+        if isinstance(dataset, pd.DataFrame):
+            raise NotImplementedError()
+
+        if isinstance(dataset, pd.Series):
+            raise NotImplementedError()
 
     if stats_method == "1CSVM":
-        raise NotImplementedError()
+        if isinstance(dataset, pd.DataFrame):
+            raise NotImplementedError()
+
+        if isinstance(dataset, pd.Series):
+            raise NotImplementedError()
 
     logger.debug(f"fail to perform kolmogorov smirnov test for {stats_method} stats method")
 

@@ -1,112 +1,340 @@
 import typing
 
-import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
-import scipy.stats as stats
+
+from anomalytics.plots.hist import (
+    plot_hist_dataset_dataframe,
+    plot_hist_dataset_series,
+    plot_hist_gpd_dataframe,
+    plot_hist_gpd_series,
+)
+from anomalytics.plots.line import (
+    plot_line_anomaly_score_dataframe,
+    plot_line_anomaly_score_series,
+    plot_line_dataset_dataframe,
+    plot_line_dataset_series,
+    plot_line_exceedance_dataframe,
+    plot_line_exceedance_series,
+)
 
 
-def plot_line(
-    dataset: typing.Union[pd.DataFrame, pd.Series],
-    threshold: typing.Optional[typing.Union[pd.Series, float, np.float64, np.number]],
+@typing.overload
+def visualize(
+    plot_type: typing.Literal["hist-dataset-df",],
     title: str,
     xlabel: str,
     ylabel: str,
-    is_threshold: bool = True,
     plot_width: int = 13,
     plot_height: int = 8,
     plot_color: str = "black",
+    alpha: float = 0.8,
+    *,
+    columns: typing.List[str],
+    datasets: typing.List[pd.Series],
+    bins: int = 50,
+):
+    ...
+
+
+@typing.overload
+def visualize(
+    plot_type: typing.Literal["hist-dataset-ts",],
+    title: str,
+    xlabel: str,
+    ylabel: str,
+    plot_width: int = 13,
+    plot_height: int = 8,
+    plot_color: str = "black",
+    alpha: float = 0.8,
+    *,
+    dataset: pd.Series,
+    bins: int = 50,
+):
+    ...
+
+
+@typing.overload
+def visualize(
+    plot_type: typing.Literal["hist-gpd-df",],
+    title: str,
+    xlabel: str,
+    ylabel: str,
+    plot_width: int = 13,
+    plot_height: int = 8,
+    plot_color: str = "black",
+    alpha: float = 0.8,
+    *,
+    columns: typing.List[str],
+    datasets: typing.List[pd.Series],
+    params: typing.List[typing.Dict[str, typing.List[typing.Union[float, int]]]],
+    bins: int = 50,
+):
+    ...
+
+
+@typing.overload
+def visualize(
+    plot_type: typing.Literal["hist-gpd-ts",],
+    title: str,
+    xlabel: str,
+    ylabel: str,
+    plot_width: int = 13,
+    plot_height: int = 8,
+    plot_color: str = "black",
+    alpha: float = 0.8,
+    *,
+    dataset: pd.Series,
+    params: typing.Dict[str, typing.Union[float, int]],
+    bins: int = 50,
+):
+    ...
+
+
+@typing.overload
+def visualize(
+    plot_type: typing.Literal["line-anomaly-score-df",],
+    title: str,
+    xlabel: str,
+    ylabel: str,
+    plot_width: int = 13,
+    plot_height: int = 8,
+    plot_color: str = "black",
+    alpha: float = 0.8,
+    *,
+    columns: typing.List[str],
+    datasets: typing.List[pd.Series],
+    threshold: typing.Union[float, np.float64, np.number],
     th_color: str = "red",
     th_type: str = "dashed",
     th_line_width: int = 2,
-    alpha: float = 0.8,
 ):
-    fig = plt.figure(figsize=(plot_width, plot_height))
-    plt.plot(dataset.index, dataset.values, color=plot_color, alpha=alpha, label=f"{dataset.shape[0]} Data Points")
-
-    if is_threshold:
-        if not isinstance(threshold, pd.Series) and (
-            isinstance(threshold, float) or isinstance(threshold, np.float64) or isinstance(threshold, np.number)
-        ):
-            plt.axhline(
-                float(threshold), c=th_color, ls=th_type, lw=th_line_width, label=f"{threshold} Anomaly Threshold"
-            )
-        else:
-            plt.plot(
-                dataset.index,
-                threshold.values,
-                c=th_color,
-                ls=th_type,
-                lw=th_line_width,
-                label=f"Exceedance Threshold Mean {threshold.mean()}",
-            )
-    plt.title(title)
-    plt.xlabel(xlabel)
-    plt.ylabel(ylabel)
-
-    fig.legend(loc="upper left", shadow=True, fancybox=True)
-    plt.show()
+    ...
 
 
-def plot_hist(
-    dataset: typing.Union[pd.DataFrame, pd.Series],
+@typing.overload
+def visualize(
+    plot_type: typing.Literal["line-anomaly-score-ts",],
     title: str,
     xlabel: str,
     ylabel: str,
-    bins: typing.Optional[int] = 50,
     plot_width: int = 13,
     plot_height: int = 8,
     plot_color: str = "black",
     alpha: float = 0.8,
+    *,
+    dataset: pd.Series,
+    threshold: typing.Union[float, np.float64, np.number],
+    th_color: str = "red",
+    th_type: str = "dashed",
+    th_line_width: int = 2,
 ):
-    fig = plt.figure(figsize=(plot_width, plot_height))
-    plt.hist(dataset.values, bins=bins, color=plot_color, alpha=alpha)
-    plt.title(title)
-    plt.xlabel(xlabel)
-    plt.ylabel(ylabel)
-
-    fig.legend(loc="upper left", shadow=True, fancybox=True)
-    plt.show()
+    ...
 
 
-def plot_gen_pareto(
-    dataset: typing.Union[pd.DataFrame, pd.Series],
+@typing.overload
+def visualize(
+    plot_type: typing.Literal["line-dataset-df",],
     title: str,
     xlabel: str,
     ylabel: str,
-    bins: typing.Optional[int] = 50,
     plot_width: int = 13,
     plot_height: int = 8,
     plot_color: str = "black",
     alpha: float = 0.8,
-    params: typing.Optional[typing.Dict] = None,
+    *,
+    columns: typing.List[str],
+    datasets: typing.List[pd.Series],
 ):
-    fig = plt.figure(figsize=(plot_width, plot_height))
+    ...
 
-    if params:
-        param_label = f"\n{round(params['c'], 3)}\n{round(params['loc'], 3)}\n{round(params['scale'], 3)}\n"
-        overlay = np.linspace(
-            start=stats.genpareto.ppf(q=0.001, c=params["c"], loc=params["loc"], scale=params["scale"]),
-            stop=stats.genpareto.ppf(q=0.999, c=params["c"], loc=params["loc"], scale=params["scale"]),
-            num=dataset.shape[0],
+
+@typing.overload
+def visualize(
+    plot_type: typing.Literal["line-dataset-ts",],
+    title: str,
+    xlabel: str,
+    ylabel: str,
+    plot_width: int = 13,
+    plot_height: int = 8,
+    plot_color: str = "black",
+    alpha: float = 0.8,
+    *,
+    dataset: pd.Series,
+):
+    ...
+
+
+@typing.overload
+def visualize(
+    plot_type: typing.Literal["line-exceedance-df",],
+    title: str,
+    xlabel: str,
+    ylabel: str,
+    plot_width: int = 13,
+    plot_height: int = 8,
+    plot_color: str = "black",
+    alpha: float = 0.8,
+    *,
+    columns: typing.List[str],
+    datasets: typing.List[pd.Series],
+    thresholds: typing.List[pd.Series],
+    th_color: str = "red",
+    th_type: str = "dashed",
+    th_line_width: int = 2,
+):
+    ...
+
+
+@typing.overload
+def visualize(
+    plot_type: typing.Literal["line-exceedance-ts",],
+    title: str,
+    xlabel: str,
+    ylabel: str,
+    plot_width: int = 13,
+    plot_height: int = 8,
+    plot_color: str = "black",
+    alpha: float = 0.8,
+    *,
+    dataset: pd.Series,
+    threshold: pd.Series,
+    th_color: str = "red",
+    th_type: str = "dashed",
+    th_line_width: int = 2,
+):
+    ...
+
+
+def visualize(
+    plot_type: typing.Literal[
+        "hist-dataset-df",
+        "hist-dataset-ts",
+        "hist-gpd-df",
+        "hist-gpd-ts",
+        "line-anomaly-score-df",
+        "line-anomaly-score-ts",
+        "line-dataset-df",
+        "line-dataset-ts",
+        "line-exceedance-df",
+        "line-exceedance-ts",
+    ],
+    title: str,
+    xlabel: str,
+    ylabel: str,
+    plot_width: int = 13,
+    plot_height: int = 8,
+    plot_color: str = "black",
+    alpha: float = 0.8,
+    **kwargs,
+):
+    if plot_type == "hist-dataset-df":
+        return plot_hist_dataset_dataframe(
+            title=title,
+            xlabel=xlabel,
+            ylabel=ylabel,
+            plot_width=plot_width,
+            plot_height=plot_height,
+            plot_color=plot_color,
+            alpha=alpha,
+            **kwargs,
         )
-        plt.plot(
-            overlay,
-            stats.genpareto.pdf(x=overlay, c=params["c"], loc=params["loc"], scale=params["scale"]),
-            c="lime",
-            lw=2,
-            label=f"\nFitted Params:{param_label}",
+    if plot_type == "hist-dataset-ts":
+        return plot_hist_dataset_series(
+            title=title,
+            xlabel=xlabel,
+            ylabel=ylabel,
+            plot_width=plot_width,
+            plot_height=plot_height,
+            plot_color=plot_color,
+            alpha=alpha,
+            **kwargs,
         )
-    plt.hist(
-        dataset,
-        bins=bins,
-        density=True,
-        alpha=alpha,
-        color=plot_color,
-        label=f"Non-Zero Exceedances: {dataset.shape[0]}",
-    )
-    plt.xlabel(xlabel)
-    plt.ylabel(ylabel)
-    plt.title(title)
-    fig.legend(loc="upper right", shadow=True, fancybox=True)
-    plt.show()
+    if plot_type == "hist-gpd-df":
+        return plot_hist_gpd_dataframe(
+            title=title,
+            xlabel=xlabel,
+            ylabel=ylabel,
+            plot_width=plot_width,
+            plot_height=plot_height,
+            plot_color=plot_color,
+            alpha=alpha,
+            **kwargs,
+        )
+    if plot_type == "hist-gpd-ts":
+        return plot_hist_gpd_series(
+            title=title,
+            xlabel=xlabel,
+            ylabel=ylabel,
+            plot_width=plot_width,
+            plot_height=plot_height,
+            plot_color=plot_color,
+            alpha=alpha,
+            **kwargs,
+        )
+    if plot_type == "line-anomaly-score-df":
+        return plot_line_anomaly_score_dataframe(
+            title=title,
+            xlabel=xlabel,
+            ylabel=ylabel,
+            plot_width=plot_width,
+            plot_height=plot_height,
+            plot_color=plot_color,
+            alpha=alpha,
+            **kwargs,
+        )
+    if plot_type == "line-anomaly-score-ts":
+        return plot_line_anomaly_score_series(
+            title=title,
+            xlabel=xlabel,
+            ylabel=ylabel,
+            plot_width=plot_width,
+            plot_height=plot_height,
+            plot_color=plot_color,
+            alpha=alpha,
+            **kwargs,
+        )
+    if plot_type == "line-dataset-df":
+        return plot_line_dataset_dataframe(
+            title=title,
+            xlabel=xlabel,
+            ylabel=ylabel,
+            plot_width=plot_width,
+            plot_height=plot_height,
+            plot_color=plot_color,
+            alpha=alpha,
+            **kwargs,
+        )
+    if plot_type == "line-dataset-ts":
+        return plot_line_dataset_series(
+            title=title,
+            xlabel=xlabel,
+            ylabel=ylabel,
+            plot_width=plot_width,
+            plot_height=plot_height,
+            plot_color=plot_color,
+            alpha=alpha,
+            **kwargs,
+        )
+    if plot_type == "line-exceedance-df":
+        return plot_line_exceedance_dataframe(
+            title=title,
+            xlabel=xlabel,
+            ylabel=ylabel,
+            plot_width=plot_width,
+            plot_height=plot_height,
+            plot_color=plot_color,
+            alpha=alpha,
+            **kwargs,
+        )
+    if plot_type == "line-exceedance-ts":
+        return plot_line_exceedance_series(
+            title=title,
+            xlabel=xlabel,
+            ylabel=ylabel,
+            plot_width=plot_width,
+            plot_height=plot_height,
+            plot_color=plot_color,
+            alpha=alpha,
+            **kwargs,
+        )
