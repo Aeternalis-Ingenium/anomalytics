@@ -23,7 +23,15 @@ def calculate_theoretical_q(
     ],
     fit_params: typing.List[typing.Dict[str, typing.Union[typing.List[typing.Dict[str, float]], float]]],
     is_random_param: bool = False,
-) -> typing.Tuple[pd.Series, np.ndarray[typing.Any, np.dtype[typing.Any]], typing.Union[typing.List, typing.Dict]]:
+) -> typing.Union[
+    typing.Tuple[typing.List[pd.Series], typing.List[float], typing.List[typing.Dict[str, typing.Union[float, int]]]],
+    typing.Tuple[
+        typing.Union[typing.List[typing.Union[float, np.float64]], np.ndarray],
+        typing.List[typing.Union[float, np.float64]],
+        np.ndarray,
+    ],
+    typing.Dict[str, typing.Union[float, np.float64]],
+]:
     """
     Calculate the theoretical quantiles for a given time series and statistical method from the fitting parameters.
 
@@ -240,7 +248,7 @@ def visualize_qq_plot(
                     theoretical_qs[index],
                     sorted_nonzero_datasets[index],
                     c="black",
-                    label=f"{len(sorted_nonzero_datasets[index])} Exceedences > 0",
+                    label=f"{len(sorted_nonzero_datasets[index])} Exceedences > 0",  # type: ignore
                 )
                 ax.plot(
                     [np.min(theoretical_qs[index]), np.max(theoretical_qs[index])],
