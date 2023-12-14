@@ -125,7 +125,7 @@ def calculate_theoretical_q(
             logger.debug(
                 f"successfully performing theoretical quantile calculation for qq plot with fit_params={fit_params}"
             )
-            return (sorted_nonzero_exceedances, theoretical_q, nonzero_params)
+            return (sorted_nonzero_exceedances, theoretical_q, nonzero_params)  # type: ignore
 
     elif stats_method == "ZS":
         raise NotImplementedError("Not implemented yet!")
@@ -249,8 +249,8 @@ def visualize_qq_plot(
                     label=f"{len(sorted_nonzero_datasets[index])} Exceedences > 0",  # type: ignore
                 )
                 ax.plot(
-                    [np.min(theoretical_qs[index]), np.max(theoretical_qs[index])],
-                    [np.min(theoretical_qs[index]), np.max(theoretical_qs[index])],
+                    [np.min(theoretical_qs[index]), np.max(theoretical_qs[index])],  # type: ignore
+                    [np.min(theoretical_qs[index]), np.max(theoretical_qs[index])],  # type: ignore
                     c="lime",
                     lw=2,
                     label=f"\nFitted GPD Params:\n    c: {round(params[index]['c'], 2)}\n    loc: {round(params[index]['loc'], 2)}\n    scale: {round(params[index]['scale'], 2)}",  # type: ignore
