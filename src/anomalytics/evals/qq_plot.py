@@ -23,14 +23,12 @@ def calculate_theoretical_q(
     ],
     fit_params: typing.List[typing.Dict[str, typing.Union[typing.List[typing.Dict[str, float]], float]]],
     is_random_param: bool = False,
-) -> typing.Union[
-    typing.Tuple[typing.List[pd.Series], typing.List[float], typing.List[typing.Dict[str, typing.Union[float, int]]]],
-    typing.Tuple[
-        typing.Union[typing.List[typing.Union[float, np.float64]], np.ndarray],
-        typing.List[typing.Union[float, np.float64]],
-        np.ndarray,
+) -> typing.Tuple[
+    typing.List[typing.Union[pd.Series, np.ndarray]],
+    typing.List[typing.List[typing.Union[float, np.float64]]],
+    typing.Union[
+        typing.List[typing.Dict[str, typing.Union[float, int]]], typing.Dict[str, typing.Union[float, np.float64, int]]
     ],
-    typing.Dict[str, typing.Union[float, np.float64]],
 ]:
     """
     Calculate the theoretical quantiles for a given time series and statistical method from the fitting parameters.
@@ -273,10 +271,10 @@ def visualize_qq_plot(
             scatter_label = f"{len(sorted_nonzero_dataset)} Exceedances > 0"
             plot_label = f"\nFitted GPD Params:\n  c: {round(params['c'], 2)}\n  loc: {round(params['loc'], 2)}\n  scale: {round(params['scale'], 2)}"  # type: ignore
 
-            plt.scatter(theoretical_q, sorted_nonzero_dataset, c="black", label=scatter_label)
+            plt.scatter(theoretical_q, sorted_nonzero_dataset, c="black", label=scatter_label)  # type: ignore
             plt.plot(
-                [np.min(theoretical_q), np.max(theoretical_q)],
-                [np.min(theoretical_q), np.max(theoretical_q)],
+                [np.min(theoretical_q), np.max(theoretical_q)],  # type: ignore
+                [np.min(theoretical_q), np.max(theoretical_q)],  # type: ignore
                 c="lime",
                 lw=2,
                 label=plot_label,

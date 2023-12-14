@@ -160,7 +160,7 @@ def plot_line_anomaly_score_dataframe(
             label=f"{datasets[index].shape[0]} Data",
         )
         ax.axhline(
-            float(threshold), c=th_color, ls=th_type, lw=th_line_width, label=f"{round(threshold, 2)} Threshold"
+            float(threshold), c=th_color, ls=th_type, lw=th_line_width, label=f"{round(threshold, 2)} Threshold"  # type: ignore
         )
         ax.set_xlabel(xlabel)
         ax.set_ylabel(ylabel)
@@ -189,7 +189,7 @@ def plot_line_anomaly_score_series(
 ):
     fig = plt.figure(figsize=(plot_width, plot_height))
     plt.plot(dataset.index, dataset.values, color=plot_color, alpha=alpha, label=f"{dataset.shape[0]} Data")
-    plt.axhline(float(threshold), c=th_color, ls=th_type, lw=th_line_width, label=f"{round(threshold, 2)} Threshold")
+    plt.axhline(float(threshold), c=th_color, ls=th_type, lw=th_line_width, label=f"{round(threshold, 2)} Threshold")  # type: ignore
     plt.title(title)
     plt.xlabel(xlabel)
     plt.ylabel(ylabel)
