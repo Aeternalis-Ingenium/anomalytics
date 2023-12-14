@@ -329,11 +329,11 @@ def get_sample_1_gpd_params(request):
 @pytest.fixture(name="get_sample_1_detection_summary", scope="function")
 def get_sample_1_detection_summary(request):
     request.cls.sample_1_detection_summary = pd.DataFrame(
+        index=["2023-01-01", "2023-01-02", "2023-01-04", "2023-01-10"],
         data={
             "row": [0, 1, 3, 9],
-            "datetime": ["2023-01-01", "2023-01-02", "2023-01-04", "2023-01-10"],
             "anomalous_data": [61234, 83421, 69898, 75521],
             "anomaly_score": [7.343, 9.312, 7.884, 8.123],
             "anomaly_threshold": [7.3, 7.3, 7.3, 7.3],
-        }
+        },
     )

@@ -110,7 +110,7 @@ class TestPOTDetector(unittest.TestCase):
             }
         )
 
-        expected_params = [
+        expected_nonzero_params = [
             {
                 "feature_1": [
                     {"c": -2.020681654255883, "loc": 0, "scale": 10.103408271279417},
@@ -131,7 +131,7 @@ class TestPOTDetector(unittest.TestCase):
         self.pot3_dataframe_detector.get_extremes(q=0.90)
         self.pot3_dataframe_detector.fit()
         gpd_params = self.pot3_dataframe_detector._POTDetector__get_nonzero_params
-        self.assertEqual(gpd_params, expected_params)
+        self.assertEqual(gpd_params, expected_nonzero_params)
 
         pd.testing.assert_frame_equal(left=self.pot3_dataframe_detector.fit_result, right=expected_anomaly_scores)
 

@@ -50,7 +50,13 @@ class SlackNotification(Notification):
             raise TypeError("Invalid type! `detection_summary` must be Pandas DataFrame")
 
         most_recent_data = detection_summary.iloc[[-1]]
-        anomaly_report = f"Row: {most_recent_data.row.values[0]} | Date: {most_recent_data.datetime.values[0]} | Anomalous Data: {most_recent_data.anomalous_data.values[0]} | Anomaly Score: {most_recent_data.anomaly_score.values[0]} | Anomaly Threshold: {most_recent_data.anomaly_threshold.values[0]}"
+        if "total_anomaly_score" in most_recent_data.columns:
+            data_dict = most_recent_data.to_dict("list")
+            anomaly_report = f"datetime: {most_recent_data.index[-1]}\n\n"
+            for key, value in data_dict.items():
+                anomaly_report += f"{key}: {value[-1]}\n\n"  # type: ignore
+        else:
+            anomaly_report = f"Date: {most_recent_data.index[0]}\n\nRow: {most_recent_data['row'].iloc[0]}\n\nAnomaly: {most_recent_data['anomalous_data'].iloc[0]}\n\nAnomaly Score: {most_recent_data['anomaly_score'].iloc[0]}\n\nAnomaly Threshold: {most_recent_data['anomaly_threshold'].iloc[0]}"  # type: ignore
 
         if not message:
             fmt_message = f"{self.__subject}\n\n{anomaly_report}"

@@ -474,7 +474,7 @@ def get_anomaly(anomaly_score_dataset: typing.Union[pd.DataFrame, pd.Series], th
     if threshold is None or not isinstance(threshold, float):
         raise TypeError("Invalid type! `threshold` must be a float")
 
-    t2_anomaly_scores = anomaly_score_dataset.iloc[t1:]
+    t2_anomaly_scores = anomaly_score_dataset.iloc[t1:].copy()
 
     if isinstance(anomaly_score_dataset, pd.DataFrame):
         detected_data = t2_anomaly_scores["total_anomaly_score"].apply(lambda x: x > threshold).to_list()

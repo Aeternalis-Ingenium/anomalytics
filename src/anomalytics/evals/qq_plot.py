@@ -1,4 +1,3 @@
-import datetime
 import logging
 import typing
 
@@ -22,9 +21,7 @@ def calculate_theoretical_q(
         "ZSCORE",
         "1CSVM",
     ],
-    fit_params: typing.List[
-        typing.Dict[str, typing.Union[typing.List[typing.Dict[str, float]], datetime.datetime, float]]
-    ],
+    fit_params: typing.List[typing.Dict[str, typing.Union[typing.List[typing.Dict[str, float]], float]]],
     is_random_param: bool = False,
 ) -> typing.Tuple[pd.Series, np.ndarray[typing.Any, np.dtype[typing.Any]], typing.Union[typing.List, typing.Dict]]:
     """
@@ -88,23 +85,22 @@ def calculate_theoretical_q(
             theoretical_qs: typing.List = []
             nonzero_fit_params: typing.List = []
 
-            for column in dataset.columns:  # type: ignore
+            for index, column in enumerate(dataset.columns):  # type: ignore
                 exceedence_series = dataset[column].copy()  # type: ignore
                 nonzero_exceedances = exceedence_series[exceedence_series.values > 0]
                 sorted_nonzero_exceedances = np.sort(nonzero_exceedances)
                 q = np.arange(1, len(sorted_nonzero_exceedances) + 1) / (len(sorted_nonzero_exceedances) + 1)
 
                 if is_random_param:
-                    nonzero_params = fit_params[column][np.random.randint(low=0, high=len(fit_params) - 1)]
+                    nonzero_params = fit_params[index][column][np.random.randint(low=0, high=len(fit_params) - 1)]  # type: ignore
                 else:
-                    nonzero_params = fit_params[column][-1]
+                    nonzero_params = fit_params[index][column][-1]  # type: ignore
                 theoretical_q = stats.genpareto.ppf(
                     q=q, c=nonzero_params["c"], loc=nonzero_params["loc"], scale=nonzero_params["scale"]
                 )
                 nonzero_datasets.append(sorted_nonzero_exceedances)
                 theoretical_qs.append(theoretical_q)
-                nonzero_fit_params.append(nonzero_fit_params)
-
+                nonzero_fit_params.append(nonzero_params)
             return (nonzero_datasets, theoretical_qs, nonzero_fit_params)
 
         elif isinstance(dataset, pd.Series):
@@ -150,9 +146,7 @@ def visualize_qq_plot(
         "ZSCORE",
         "1CSVM",
     ],
-    fit_params: typing.List[
-        typing.Dict[str, typing.Union[typing.List[typing.Dict[str, float]], datetime.datetime, float]]
-    ],
+    fit_params: typing.List[typing.Dict[str, typing.Union[typing.List[typing.Dict[str, float]], float]]],
     is_random_param: bool = False,
     plot_width: int = 15,
     plot_height: int = 10,
@@ -253,13 +247,14 @@ def visualize_qq_plot(
                     [np.min(theoretical_qs[index]), np.max(theoretical_qs[index])],
                     c="lime",
                     lw=2,
-                    label=f"\nFitted GPD Params:\n    c: {round(params['c'], 3)}\n    loc: {round(params['loc'], 3)}\n    scale: {round(params['scale'], 3)}",  # type: ignore
+                    label=f"\nFitted GPD Params:\n    c: {round(params[index]['c'], 2)}\n    loc: {round(params[index]['loc'], 2)}\n    scale: {round(params[index]['scale'], 2)}",  # type: ignore
                 )
                 ax.set_xlabel(x_label)
                 ax.set_ylabel(y_label)
-                ax.set_box_aspect(0.5)
                 ax.legend(loc="upper left", shadow=True, fancybox=True)
                 ax.set_title(f"\nDataset Column - {index}", fontsize=12)
+            plt.tight_layout()
+            plt.subplots_adjust(top=0.9)
             fig.suptitle(suptitle, fontsize=12)
 
         elif isinstance(dataset, pd.Series):
@@ -268,7 +263,7 @@ def visualize_qq_plot(
             )
             fig = plt.figure(figsize=(plot_width, plot_height))
             scatter_label = f"{len(sorted_nonzero_dataset)} Exceedances > 0"
-            plot_label = f"\nFitted GPD Params:\n  c: {round(params['c'], 3)}\n  loc: {round(params['loc'], 3)}\n  scale: {round(params['scale'], 3)}"  # type: ignore
+            plot_label = f"\nFitted GPD Params:\n  c: {round(params['c'], 2)}\n  loc: {round(params['loc'], 2)}\n  scale: {round(params['scale'], 2)}"  # type: ignore
 
             plt.scatter(theoretical_q, sorted_nonzero_dataset, c="black", label=scatter_label)
             plt.plot(

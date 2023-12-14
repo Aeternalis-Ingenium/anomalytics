@@ -33,7 +33,7 @@ def ks_1sample(
 @typing.overload
 def ks_1sample(
     dataset: typing.Union[pd.DataFrame, pd.Series],
-    stats_method: typing.Literal["DBSCAN",],
+    stats_method: typing.Literal["DBSCAN"],
     fit_params: typing.List[
         typing.Dict[str, typing.Union[typing.List[typing.Dict[str, float]], datetime.datetime, float]]
     ],

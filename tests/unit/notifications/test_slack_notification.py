@@ -37,7 +37,11 @@ class TestSlackNotification(unittest.TestCase):
             {
                 "text": "🤖 Anomalytics - Anomaly Detected!"
                 "\n\nTest notification message"
-                "\n\nRow: 9 | Date: 2023-01-10 | Anomalous Data: 75521 | Anomaly Score: 8.123 | Anomaly Threshold: 7.3"
+                "\n\nDate: 2023-01-10\n\n"
+                "Row: 9\n\n"
+                "Anomaly: 75521\n\n"
+                "Anomaly Score: 8.123\n\n"
+                "Anomaly Threshold: 7.3"
             }
         )
 
@@ -50,7 +54,11 @@ class TestSlackNotification(unittest.TestCase):
         expected_payload = dumps(
             {
                 "text": "🤖 Anomalytics - Anomaly Detected!"
-                "\n\nRow: 9 | Date: 2023-01-10 | Anomalous Data: 75521 | Anomaly Score: 8.123 | Anomaly Threshold: 7.3"
+                "\n\nDate: 2023-01-10\n\n"
+                "Row: 9\n\n"
+                "Anomaly: 75521\n\n"
+                "Anomaly Score: 8.123\n\n"
+                "Anomaly Threshold: 7.3"
             }
         )
 
