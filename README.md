@@ -34,7 +34,7 @@
         <img src="https://img.shields.io/badge/docs-passing-brightgreen.svg" alt="Documentation">
     </a>
     <a href="https://pypi.org/project/anomalytics/">
-        <img src="https://img.shields.io/badge/PyPi-v0.1.6-blue.svg" alt="PyPi">
+        <img src="https://img.shields.io/badge/PyPi-v0.1.9-blue.svg" alt="PyPi">
     </a>
 </p>
 
@@ -118,7 +118,7 @@ Read the walkthrough below, or the concrete examples here:
     T2: 6570
     ```
 
-    ![Ad Impressions Dataset](docs/assets/readme/01-AdImpressionDatasetDistributions.png)
+    ![Ad Impressions Dataset](https://github.com/Aeternalis-Ingenium/anomalytics/raw/trunk/docs/assets/readme/01-AdImpressionDatasetDistributions.png)
 
 3. The purpose of using the detector object instead the standalone is to have a simple fix detection flow. In case you want to customize the time window, we can call the `reset_time_window()` to reset `t2` value, even though that will beat the purpose of using a detector object. Pay attention to the period parameters because the method expects a percentage representation of the distribution of period (ranging 0.0 to 1.0):
 
@@ -142,7 +142,7 @@ Read the walkthrough below, or the concrete examples here:
     T2: 10000
     ```
 
-    ![Ad Impressions Hist](docs/assets/readme/02-AdImpressionsNormDistributions.png)
+    ![Ad Impressions Hist]([docs/assets/readme/02-AdImpressionsNormDistributions.png](https://github.com/Aeternalis-Ingenium/anomalytics/raw/trunk/docs/assets/readme/02-AdImpressionsNormDistributions.png))
 
 4. Now, we can extract exceedances by giving the expected `q`uantile:
 
@@ -166,7 +166,7 @@ Read the walkthrough below, or the concrete examples here:
     pot_detector.plot(ptype="line-exceedance-df", title="Peaks Over Threshold", xlabel="Minute", ylabel="Page Impressions", alpha=1.0)
     ```
 
-    ![Exceedance-POT](docs/assets/readme/03-AdImpressionsExceedances.png)
+    ![Exceedance-POT](https://github.com/Aeternalis-Ingenium/anomalytics/raw/trunk/docs/assets/readme/03-AdImpressionsExceedances.png)
 
 6. Now that we have the exceedances, we can fit our data into the chosen distribution, in this example the "Generalized Pareto Distribution". The first couple rows will be zeroes which is normal because we only fit data that are greater than zero into the wanted distribution:
 
@@ -190,7 +190,7 @@ Read the walkthrough below, or the concrete examples here:
     pot_detector.plot(ptype="hist-gpd-df", title="GPD - PDF", xlabel="Page Impressions", ylabel="Density", alpha=1.0, bins=100)
     ```
 
-    ![GPD-PDF](docs/assets/readme/04-AdImpressionsGPDPDF.png)
+    ![GPD-PDF](https://github.com/Aeternalis-Ingenium/anomalytics/raw/trunk/docs/assets/readme/04-AdImpressionsGPDPDF.png)
 
 8. The parameters are stored inside the detector class:
 
@@ -259,7 +259,7 @@ Read the walkthrough below, or the concrete examples here:
     pot_detector.plot(ptype="line-anomaly-score-df", title="Anomaly Score", xlabel="Minute", ylabel="Page Impressions", alpha=1.0)
     ```
 
-    ![Anomaly Scores](docs/assets/readme/05-AdImpressionsAnomalyScore.png)
+    ![Anomaly Scores](https://github.com/Aeternalis-Ingenium/anomalytics/raw/trunk/docs/assets/readme/05-AdImpressionsAnomalyScore.png)
 
 11. Now what? Well, while the detection process seems quite straight forward, in most cases getting the details of each anomalous data is quite tidious! That's why `anomalytics` provides a comfortable method to get the summary of the detection so we can see when, in which row, and how the actual anomalous data look like:
 
@@ -298,7 +298,7 @@ Read the walkthrough below, or the concrete examples here:
     pot_detector.evaluate(method="qq", is_random=True)
     ```
 
-    ![QQ-Plot GPD](docs/assets/readme/06-AdImpressionsQQPlot.png)
+    ![QQ-Plot GPD](https://github.com/Aeternalis-Ingenium/anomalytics/raw/trunk/docs/assets/readme/06-AdImpressionsQQPlot.png)
 
 ### Anomaly Detection via Standalone Functions
 
@@ -552,7 +552,7 @@ We have anomaly you said? Don't worry, `anomalytics` has the implementation to s
 
 3. Check your email or slack, this example produces the following notification via Slack:
 
-    ![Anomaly SLack Notification](docs/assets/readme/07-AdImpressionsNotification.jpeg)
+    ![Anomaly SLack Notification](https://github.com/Aeternalis-Ingenium/anomalytics/raw/trunk/docs/assets/readme/07-AdImpressionsNotification.jpeg)
 
 # Reference
 
