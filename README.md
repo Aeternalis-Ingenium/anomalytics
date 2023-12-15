@@ -34,7 +34,7 @@
         <img src="https://img.shields.io/badge/docs-passing-brightgreen.svg" alt="Documentation">
     </a>
     <a href="https://pypi.org/project/anomalytics/">
-        <img src="https://img.shields.io/badge/PyPi-v0.1.9-blue.svg" alt="PyPi">
+        <img src="https://img.shields.io/badge/PyPi-v0.2.1-blue.svg" alt="PyPi">
     </a>
 </p>
 
@@ -151,7 +151,6 @@ Read the walkthrough below, or the concrete examples here:
     pot_detector.exeedance_thresholds.head()
     ```
     ```shell
-
             xandr	      gam	    adobe	           datetime
     0	58.224653	85.177029	60.362306	2023-10-18 09:01:00
     1	58.224653	85.177029	60.362306	2023-10-18 09:02:00
@@ -252,7 +251,6 @@ Read the walkthrough below, or the concrete examples here:
     Name: detected data, Length: 6570, dtype: bool
     ```
 
-
 10. Now we can visualize the anomaly scores from the fitting with the anomaly threshold to get the sense of the extremely large values:
 
     ```python
@@ -340,6 +338,7 @@ You have a project that only needs to be fitted? To be detected? Don't worry! `a
     print(f"T1: {t1}")
     print(f"T2: {t2}")
     ```
+    ```shell
     T0: 65001
     T1: 25001
     T2: 10000
@@ -548,6 +547,9 @@ We have anomaly you said? Don't worry, `anomalytics` has the implementation to s
 
     # Slack
     slack.send
+    ```
+    ```shell
+    'Notification sent successfully.'
     ```
 
 3. Check your email or slack, this example produces the following notification via Slack:
