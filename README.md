@@ -78,8 +78,8 @@ $ pip3 install "anomalytics[codequality,docs,security,testcov,extra]"
 `anomalytics` can be used to analyze anomalies in your dataset (both as `pandas.DataFrame` or `pandas.Series`). To start, let's follow along with this minimum example where we want to detect extremely high anomalies in our dataset.
 
 Read the walkthrough below, or the concrete examples here:
-* [Extreme Anomaly Analysis - DataFrame](docs/examples/extreme_anomaly_df_analysis.ipynb)
-* [Battery Water Level Analysis - Time Series](docs/examples/battery_water_level_analysis.ipynb)
+* [Extreme Anomaly Analysis - DataFrame](https://github.com/Aeternalis-Ingenium/anomalytics/blob/trunk/docs/examples/extreme_anomaly_df_analysis.ipynb)
+* [Battery Water Level Analysis - Time Series](https://github.com/Aeternalis-Ingenium/anomalytics/blob/trunk/docs/examples/battery_water_level_analysis.ipynb)
 
 ### Anomaly Detection via the `Detector` Instance
 
@@ -142,7 +142,7 @@ Read the walkthrough below, or the concrete examples here:
     T2: 10000
     ```
 
-    ![Ad Impressions Hist]([docs/assets/readme/02-AdImpressionsNormDistributions.png](https://github.com/Aeternalis-Ingenium/anomalytics/raw/trunk/docs/assets/readme/02-AdImpressionsNormDistributions.png))
+    ![Ad Impressions Hist](https://github.com/Aeternalis-Ingenium/anomalytics/raw/trunk/docs/assets/readme/02-AdImpressionsNormDistributions.png)
 
 4. Now, we can extract exceedances by giving the expected `q`uantile:
 
