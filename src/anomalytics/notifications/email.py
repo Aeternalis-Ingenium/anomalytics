@@ -105,7 +105,7 @@ class EmailNotification(Notification):
             server.login(user=self.sender_address, password=self.password)
             server.send_message(msg=msg, from_addr=self.sender_address, to_addrs=self.recipient_addresses)
             server.quit()
-            print("Email sent successfully.")
+            print("Notification sent successfully.")
         except Exception as e:
             print(f"Failed to send email. Error: {e}")
 
