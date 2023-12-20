@@ -40,7 +40,7 @@
 
 ## Introduction
 
-`anomalytics` is a Python library that aims to implement all statistical method for the purpose of dtecting any sort of anomaly e.g. extreme events, high or low anomalies, etc. This library utilises external dependencies such as:
+`anomalytics` is a Python library that aims to implement all statistical methods for the purpose of detecting any sort of anomaly e.g. extreme events, high or low anomalies, etc. This library utilises external dependencies such as:
 
 - [Pandas 2.1.1](https://pandas.pydata.org/)
 - [NumPy 1.26.0](https://numpy.org/)
