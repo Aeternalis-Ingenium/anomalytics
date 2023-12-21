@@ -33,7 +33,9 @@ class OneClassSVMDetector(Detector):
     __params: typing.Dict
 
     def __init__(
-        self, dataset: typing.Union[pd.DataFrame, pd.Series], anomaly_type: typing.Literal["high", "low"] = "high"
+        self,
+        dataset: typing.Optional[typing.Union[pd.DataFrame, pd.Series]] = None,
+        anomaly_type: typing.Literal["high", "low"] = "high",
     ):
         """
         Initialize 1 Class SVM model for anomaly detection.
@@ -56,6 +58,9 @@ class OneClassSVMDetector(Detector):
         self.__detection = None  # type: ignore
         self.__eval = None  # type: ignore
         self.__params = {}
+
+    def assign_dataset(self, dataset: typing.Union[pd.DataFrame, pd.Series]) -> None:
+        raise NotImplementedError("Not yet implemented!")
 
     def fit(self) -> None:
         raise NotImplementedError("Not yet implemented!")

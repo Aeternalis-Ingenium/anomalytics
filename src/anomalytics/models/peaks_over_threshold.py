@@ -1,9 +1,7 @@
-import datetime
 import logging
 import typing
 import warnings
 
-import numpy as np
 import pandas as pd
 
 from anomalytics.evals.kolmogorv_smirnov import ks_1sample
@@ -135,7 +133,9 @@ class POTDetector(Detector):
     __params: typing.Dict
 
     def __init__(
-        self, dataset: typing.Union[pd.DataFrame, pd.Series], anomaly_type: typing.Literal["high", "low"] = "high"
+        self,
+        dataset: typing.Optional[typing.Union[pd.DataFrame, pd.Series]] = None,
+        anomaly_type: typing.Literal["high", "low"] = "high",
     ):
         """
         Initialize POT model for anomaly detection.
@@ -153,6 +153,26 @@ class POTDetector(Detector):
 
         if anomaly_type not in ["high", "low"]:
             raise ValueError(f"Invalid value! The `anomaly_type` argument must be 'high' or 'low'")
+        if dataset is not None:
+            self.__process_dataset(dataset=dataset)
+        else:
+            self.__datetime = None  # type: ignore
+            self.__dataset = dataset
+            self.__time_window = None  # type: ignore
+
+        self.__anomaly_type = anomaly_type
+
+        self.__exceedance_threshold = None  # type: ignore
+        self.__exceedance = None  # type: ignore
+        self.__anomaly_score = None  # type: ignore
+        self.__anomaly_threshold = None  # type: ignore
+        self.__detection = None  # type: ignore
+        self.__eval = None  # type: ignore
+        self.__params = {}
+
+        logger.info("successfully initialized POT detection model")
+
+    def __process_dataset(self, dataset: typing.Union[pd.DataFrame, pd.Series]) -> None:
         if not isinstance(dataset, pd.DataFrame) and not isinstance(dataset, pd.Series):
             raise TypeError("Invalid value! The `dataset` argument must be a Pandas DataFrame or Series")
 
@@ -186,8 +206,6 @@ class POTDetector(Detector):
                     ) from _error
             self.__datetime = None
             self.__dataset = dataset
-
-        self.__anomaly_type = anomaly_type
         self.__time_window = set_time_window(
             total_rows=self.__dataset.shape[0],
             method="POT",
@@ -196,15 +214,10 @@ class POTDetector(Detector):
             t1_pct=0.3,
             t2_pct=0.0,
         )
-        self.__exceedance_threshold = None  # type: ignore
-        self.__exceedance = None  # type: ignore
-        self.__anomaly_score = None  # type: ignore
-        self.__anomaly_threshold = None  # type: ignore
-        self.__detection = None  # type: ignore
-        self.__eval = None  # type: ignore
-        self.__params = {}
+        print("The dataset is successfully processed!")
 
-        logger.info("successfully initialized POT detection model")
+    def assign_dataset(self, dataset: typing.Union[pd.DataFrame, pd.Series]) -> None:
+        return self.__process_dataset(dataset=dataset)
 
     def reset_time_window(
         self,
