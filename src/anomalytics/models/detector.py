@@ -12,7 +12,7 @@ class FactoryDetector:
     def __init__(
         self,
         method: typing.Literal["AE", "BM", "DBSCAN", "ISOF", "MAD", "POT", "ZS", "1CSVM"],
-        dataset: typing.Union[pd.DataFrame, pd.Series],
+        dataset: typing.Optional[typing.Union[pd.DataFrame, pd.Series]] = None,
         anomaly_type: typing.Literal["high", "low"] = "high",
     ):
         self.method = method
@@ -67,7 +67,7 @@ class FactoryDetector:
 
 def get_detector(
     method: typing.Literal["AE", "BM", "DBSCAN", "ISOF", "MAD", "POT", "ZS", "1CSVM"],
-    dataset: typing.Union[pd.DataFrame, pd.Series],
+    dataset: typing.Optional[typing.Union[pd.DataFrame, pd.Series]] = None,
     anomaly_type: typing.Literal["high", "low"] = "high",
 ):
     return FactoryDetector(method=method, dataset=dataset, anomaly_type=anomaly_type)()

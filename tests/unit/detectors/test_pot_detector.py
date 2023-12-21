@@ -16,16 +16,19 @@ from anomalytics.models.peaks_over_threshold import POTDetector
 class TestPOTDetector(unittest.TestCase):
     def setUp(self) -> None:
         super().setUp()
-        self.pot1_series_detector = atics.get_detector(method="POT", dataset=self.sample_1_ts)  # type: ignore
+        self.pot1_series_detector = atics.get_detector(method="POT")  # type: ignore
+        self.pot1_series_detector.assign_dataset(dataset=self.sample_1_ts)  # type: ignore
+
         self.pot2_series_detector = atics.get_detector(method="POT", dataset=self.sample_2_ts, anomaly_type="low")  # type: ignore
         self.pot3_dataframe_detector = atics.get_detector(method="POT", dataset=self.sample_3_df)  # type: ignore
-        self.pot4_dataframe_detector = atics.get_detector(method="POT", dataset=self.sample_4_df)  # type: ignore
+        self.pot4_dataframe_detector = atics.get_detector(method="POT")  # type: ignore
+        self.pot4_dataframe_detector.assign_dataset(dataset=self.sample_4_df)  # type: ignore
 
     def test_instance_is_pot_detector_class_successful(self):
-        self.assertIsInstance(obj=self.pot1_series_detector, cls=POTDetector)
+        self.assertIsInstance(self.pot1_series_detector, POTDetector)
 
     def test_detector_string_method_successful(self):
-        self.assertEqual(first=str(self.pot1_series_detector), second=str(POTDetector(dataset=self.sample_1_ts)))  # type: ignore
+        self.assertEqual(str(self.pot1_series_detector), str(POTDetector(dataset=self.sample_1_ts)))  # type: ignore
 
     def test_reset_time_window_to_historical_successful(self):
         t0 = self.pot1_series_detector.t0
@@ -37,6 +40,27 @@ class TestPOTDetector(unittest.TestCase):
         self.assertNotEqual(t0, self.pot1_series_detector.t0)
         self.assertNotEqual(t1, self.pot1_series_detector.t1)
         self.assertNotEqual(t2, self.pot1_series_detector.t2)
+
+    def test_initialize_pot_detector_without_dataframe_dataset_successful(self):
+        pot_detector = atics.get_detector(method="POT")
+        self.assertIsInstance(pot_detector, cls=POTDetector)
+
+    def test_assign_dataset_after_detector_initialization_successful(self):
+        pot_ts_detector = atics.get_detector(method="POT")
+        pot_ts_detector.assign_dataset(dataset=self.sample_2_ts)  # type: ignore
+
+        pot_df_detector = atics.get_detector(method="POT")
+        pot_df_detector.assign_dataset(dataset=self.sample_3_df)  # type: ignore
+
+        self.assertIsInstance(pot_ts_detector, POTDetector)
+        self.assertEqual(pot_ts_detector.t0, 34)
+        self.assertEqual(pot_ts_detector.t1, 15)
+        self.assertEqual(pot_ts_detector.t2, 1)
+
+        self.assertIsInstance(pot_df_detector, POTDetector)
+        self.assertEqual(pot_df_detector.t0, 6)
+        self.assertEqual(pot_df_detector.t1, 3)
+        self.assertEqual(pot_df_detector.t2, 1)
 
     def test_exceedance_thresholds_dataframe_for_high_anomaly_type_successful(self):
         expected_exceedance_thresholds = pd.DataFrame(

@@ -8,19 +8,34 @@ import pandas as pd
 class Detector(metaclass=abc.ABCMeta):
     @abc.abstractmethod
     def __init__(
-        self, dataset: typing.Union[pd.DataFrame, pd.Series], anomaly_type: typing.Literal["high", "low"] = "high"
+        self,
+        dataset: typing.Optional[typing.Union[pd.DataFrame, pd.Series]] = None,
+        anomaly_type: typing.Literal["high", "low"] = "high",
     ):
         """
         Initialize the anomaly detection model with a specific statisticail method.
 
         ## Parameters
         ----------
-        dataset : typing.Union[pandas.DataFrame, pandas.Series]
+        dataset : typing.Optional[typing.Union[pandas.DataFrame, pandas.Series]], default is None
             DataFame or Series objects to be analyzed.
             Index must be date-time and values must be numeric.
 
         anomaly_type : typing.Literal["high", "low"]
             Defining which kind of anomaly are we expecting.
+        """
+        ...
+
+    @abc.abstractmethod
+    def assign_dataset(self, dataset: typing.Union[pd.DataFrame, pd.Series]) -> None:
+        """
+        Assign dataset to the `Detector` object, if it is not assigned during initialization.
+
+        ## Parameters
+        ----------
+        dataset : typing.Union[pandas.DataFrame, pandas.Series]
+            DataFame or Series objects to be analyzed.
+            Index must be date-time and values must be numeric.
         """
         ...
 
