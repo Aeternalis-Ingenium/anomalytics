@@ -7,6 +7,8 @@ on:
       - "feature/**/**"
       - "fix/**/**"
       - "release/v*.*.*"
+      - "dependabot/**"
+      - "pre-commit-ci-update-config"
   workflow_run:
     workflows: ["CI Code Quality"]
     types:
