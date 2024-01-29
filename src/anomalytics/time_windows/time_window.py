@@ -13,8 +13,7 @@ def set_time_window(  # type: ignore
     analysis_type: typing.Literal["historical", "real-time"] = "historical",
     *,
     encoded: typing.List[float],
-) -> typing.Tuple:
-    ...
+) -> typing.Tuple: ...
 
 
 @typing.overload
@@ -24,8 +23,7 @@ def set_time_window(  # type: ignore
     analysis_type: typing.Literal["historical", "real-time"] = "historical",
     *,
     block_size: float = 365.2425,
-) -> typing.Tuple:
-    ...
+) -> typing.Tuple: ...
 
 
 @typing.overload
@@ -35,8 +33,7 @@ def set_time_window(  # type: ignore
     analysis_type: typing.Literal["historical", "real-time"] = "historical",
     *,
     total_cluster: int,
-) -> typing.Tuple:
-    ...
+) -> typing.Tuple: ...
 
 
 @typing.overload
@@ -46,8 +43,7 @@ def set_time_window(  # type: ignore
     analysis_type: typing.Literal["historical", "real-time"] = "historical",
     *,
     isolated: typing.List[float],
-) -> typing.Tuple:
-    ...
+) -> typing.Tuple: ...
 
 
 @typing.overload
@@ -57,8 +53,7 @@ def set_time_window(  # type: ignore
     analysis_type: typing.Literal["historical", "real-time"] = "historical",
     *,
     medians: typing.List[float],
-) -> typing.Tuple:
-    ...
+) -> typing.Tuple: ...
 
 
 @typing.overload
@@ -68,8 +63,7 @@ def set_time_window(  # type: ignore
     analysis_type: typing.Literal["historical", "real-time"] = "historical",
     *,
     vectors: typing.List[float],
-) -> typing.Tuple:
-    ...
+) -> typing.Tuple: ...
 
 
 @typing.overload
@@ -81,8 +75,7 @@ def set_time_window(  # type: ignore
     t0_pct: float = 0.65,
     t1_pct: float = 0.25,
     t2_pct: float = 0.10,
-) -> typing.Tuple:
-    ...
+) -> typing.Tuple: ...
 
 
 @typing.overload
@@ -93,8 +86,7 @@ def set_time_window(  # type: ignore
     *,
     upper: float,
     lower: float,
-) -> typing.Tuple:
-    ...
+) -> typing.Tuple: ...
 
 
 def set_time_window(  # type: ignore
