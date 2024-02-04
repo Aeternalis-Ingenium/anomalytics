@@ -39,16 +39,14 @@ def get_notification(
     recipient_addresses: typing.List[str],
     smtp_host: str,
     smtp_port: int,
-) -> EmailNotification:
-    ...
+) -> EmailNotification: ...
 
 
 @typing.overload
 def get_notification(
     platform: typing.Literal["slack"],
     webhook_url: str,
-) -> SlackNotification:
-    ...
+) -> SlackNotification: ...
 
 
 def get_notification(platform: typing.Literal["email", "slack"], **kwargs: typing.Union[typing.List[str], str, int]):  # type: ignore

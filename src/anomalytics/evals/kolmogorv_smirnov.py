@@ -15,8 +15,7 @@ def ks_1sample(
     fit_params: typing.List[
         typing.Dict[str, typing.Union[typing.List[typing.Dict[str, float]], datetime.datetime, float]]
     ],
-) -> typing.Dict[str, typing.Union[typing.List[str], typing.List[float], typing.List[int]]]:
-    ...
+) -> typing.Dict[str, typing.Union[typing.List[str], typing.List[float], typing.List[int]]]: ...
 
 
 @typing.overload
@@ -26,8 +25,7 @@ def ks_1sample(
     fit_params: typing.List[
         typing.Dict[str, typing.Union[typing.List[typing.Dict[str, float]], datetime.datetime, float]]
     ],
-) -> typing.Dict[str, typing.Union[typing.List[str], typing.List[float], typing.List[int]]]:
-    ...
+) -> typing.Dict[str, typing.Union[typing.List[str], typing.List[float], typing.List[int]]]: ...
 
 
 @typing.overload
@@ -37,8 +35,7 @@ def ks_1sample(
     fit_params: typing.List[
         typing.Dict[str, typing.Union[typing.List[typing.Dict[str, float]], datetime.datetime, float]]
     ],
-) -> typing.Dict[str, typing.Union[typing.List[str], typing.List[float], typing.List[int]]]:
-    ...
+) -> typing.Dict[str, typing.Union[typing.List[str], typing.List[float], typing.List[int]]]: ...
 
 
 @typing.overload
@@ -48,8 +45,7 @@ def ks_1sample(
     fit_params: typing.List[
         typing.Dict[str, typing.Union[typing.List[typing.Dict[str, float]], datetime.datetime, float]]
     ],
-) -> typing.Dict[str, typing.Union[typing.List[str], typing.List[float], typing.List[int]]]:
-    ...
+) -> typing.Dict[str, typing.Union[typing.List[str], typing.List[float], typing.List[int]]]: ...
 
 
 @typing.overload
@@ -59,8 +55,7 @@ def ks_1sample(
     fit_params: typing.List[
         typing.Dict[str, typing.Union[typing.List[typing.Dict[str, float]], datetime.datetime, float]]
     ],
-) -> typing.Dict[str, typing.Union[typing.List[str], typing.List[float], typing.List[int]]]:
-    ...
+) -> typing.Dict[str, typing.Union[typing.List[str], typing.List[float], typing.List[int]]]: ...
 
 
 @typing.overload
@@ -70,8 +65,7 @@ def ks_1sample(
     fit_params: typing.List[
         typing.Dict[str, typing.Union[typing.List[typing.Dict[str, float]], datetime.datetime, float]]
     ],
-) -> typing.Dict[str, typing.Union[typing.List[str], typing.List[float], typing.List[int]]]:
-    ...
+) -> typing.Dict[str, typing.Union[typing.List[str], typing.List[float], typing.List[int]]]: ...
 
 
 @typing.overload
@@ -81,8 +75,7 @@ def ks_1sample(
     fit_params: typing.List[
         typing.Dict[str, typing.Union[typing.List[typing.Dict[str, float]], datetime.datetime, float]]
     ],
-) -> typing.Dict[str, typing.Union[typing.List[str], typing.List[float], typing.List[int]]]:
-    ...
+) -> typing.Dict[str, typing.Union[typing.List[str], typing.List[float], typing.List[int]]]: ...
 
 
 @typing.overload
@@ -92,8 +85,7 @@ def ks_1sample(
     fit_params: typing.List[
         typing.Dict[str, typing.Union[typing.List[typing.Dict[str, float]], datetime.datetime, float]]
     ],
-) -> typing.Dict[str, typing.Union[typing.List[str], typing.List[float], typing.List[int]]]:
-    ...
+) -> typing.Dict[str, typing.Union[typing.List[str], typing.List[float], typing.List[int]]]: ...
 
 
 def ks_1sample(

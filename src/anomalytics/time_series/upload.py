@@ -112,8 +112,7 @@ def read_ts(
     header: int | typing.Sequence[int] | typing.Literal["infer"] | None = None,
     *,
     sep: str | None = ",",
-) -> pd.Series:
-    ...
+) -> pd.Series: ...
 
 
 @typing.overload
@@ -125,8 +124,7 @@ def read_ts(
     header: int | typing.Sequence[int] | typing.Literal["infer"] | None = None,
     *,
     sheet_name: str | int | None = 0,
-) -> pd.Series:
-    ...
+) -> pd.Series: ...
 
 
 def read_ts(

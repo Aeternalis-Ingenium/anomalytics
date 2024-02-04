@@ -33,8 +33,7 @@ def visualize(
     columns: typing.List[str],
     datasets: typing.List[pd.Series],
     bins: int = 50,
-):
-    ...
+): ...
 
 
 @typing.overload
@@ -50,8 +49,7 @@ def visualize(
     *,
     dataset: pd.Series,
     bins: int = 50,
-):
-    ...
+): ...
 
 
 @typing.overload
@@ -69,8 +67,7 @@ def visualize(
     datasets: typing.List[pd.Series],
     params: typing.List[typing.Dict[str, typing.List[typing.Union[float, int]]]],
     bins: int = 50,
-):
-    ...
+): ...
 
 
 @typing.overload
@@ -87,8 +84,7 @@ def visualize(
     dataset: pd.Series,
     params: typing.Dict[str, typing.Union[float, int]],
     bins: int = 50,
-):
-    ...
+): ...
 
 
 @typing.overload
@@ -108,8 +104,7 @@ def visualize(
     th_color: str = "red",
     th_type: str = "dashed",
     th_line_width: int = 2,
-):
-    ...
+): ...
 
 
 @typing.overload
@@ -128,8 +123,7 @@ def visualize(
     th_color: str = "red",
     th_type: str = "dashed",
     th_line_width: int = 2,
-):
-    ...
+): ...
 
 
 @typing.overload
@@ -145,8 +139,7 @@ def visualize(
     *,
     columns: typing.List[str],
     datasets: typing.List[pd.Series],
-):
-    ...
+): ...
 
 
 @typing.overload
@@ -161,8 +154,7 @@ def visualize(
     alpha: float = 0.8,
     *,
     dataset: pd.Series,
-):
-    ...
+): ...
 
 
 @typing.overload
@@ -182,8 +174,7 @@ def visualize(
     th_color: str = "red",
     th_type: str = "dashed",
     th_line_width: int = 2,
-):
-    ...
+): ...
 
 
 @typing.overload
@@ -202,8 +193,7 @@ def visualize(
     th_color: str = "red",
     th_type: str = "dashed",
     th_line_width: int = 2,
-):
-    ...
+): ...
 
 
 def visualize(
