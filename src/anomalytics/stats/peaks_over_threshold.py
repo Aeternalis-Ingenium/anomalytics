@@ -181,7 +181,7 @@ def __gpd_fit_dataframe(
             nonzero_fit_exceedances = fit_exceedances[column][fit_exceedances[column] > 0.0].to_list()
             if future_exeedance[column].iloc[0] > 0:
                 if len(nonzero_fit_exceedances) > 0:
-                    (c, loc, scale) = stats.genpareto.fit(data=nonzero_fit_exceedances, floc=0)
+                    c, loc, scale = stats.genpareto.fit(data=nonzero_fit_exceedances, floc=0)
                     p_value: float = stats.genpareto.sf(x=future_exeedance[column].iloc[0], c=c, loc=loc, scale=scale)
                     inverted_p_value = 1 / p_value if p_value > 0.0 else float("inf")
                     total_anomaly_score += inverted_p_value
@@ -226,7 +226,7 @@ def __gpd_fit_series(
         nonzero_fit_exceedances = fit_exceedances[fit_exceedances.values > 0.0]
         if future_exeedance > 0:
             if len(nonzero_fit_exceedances.values) > 0:
-                (c, loc, scale) = stats.genpareto.fit(data=nonzero_fit_exceedances.values, floc=0)
+                c, loc, scale = stats.genpareto.fit(data=nonzero_fit_exceedances.values, floc=0)
                 p_value = stats.genpareto.sf(x=future_exeedance, c=c, loc=loc, scale=scale)
                 inverted_p_value = 1 / p_value if p_value > 0.0 else float("inf")
                 gpd_params[row] = dict(
