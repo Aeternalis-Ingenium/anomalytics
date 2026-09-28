@@ -235,7 +235,7 @@ def visualize_qq_plot(
 
     elif stats_method == "POT":
         if isinstance(dataset, pd.DataFrame):
-            (sorted_nonzero_datasets, theoretical_qs, params) = calculate_theoretical_q(
+            sorted_nonzero_datasets, theoretical_qs, params = calculate_theoretical_q(
                 dataset=dataset, fit_params=fit_params, stats_method=stats_method, is_random_param=is_random_param
             )
             fig, axs = plt.subplots(figsize=(20, 15), nrows=len(sorted_nonzero_datasets))
@@ -264,7 +264,7 @@ def visualize_qq_plot(
             fig.suptitle(suptitle, fontsize=12)
 
         elif isinstance(dataset, pd.Series):
-            (sorted_nonzero_dataset, theoretical_q, params) = calculate_theoretical_q(
+            sorted_nonzero_dataset, theoretical_q, params = calculate_theoretical_q(
                 dataset=dataset, fit_params=fit_params, stats_method=stats_method, is_random_param=is_random_param
             )
             fig = plt.figure(figsize=(plot_width, plot_height))
